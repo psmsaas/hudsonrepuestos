@@ -55,56 +55,57 @@
     </style>
 
     <script>
-        // Configuración inicial de localStorage para contraseña y ajustes
-        if(!localStorage.getItem('app_password')) localStorage.setItem('app_password', 'hrepuestos');
-        if(!localStorage.getItem('stock_alerts')) localStorage.setItem('stock_alerts', 'true');
+        // Sistema de login asíncrono para soportar contraseñas globales en Firebase
+        let resolveFirebase;
+        window.firebaseLoadedPromise = new Promise(resolve => { resolveFirebase = resolve; });
+        
+        // Esta función será llamada cuando Firebase termine de cargar
+        window.onFirebaseLoaded = function(checkPasswordFunc) {
+            window.verifyPasswordWithFirebase = checkPasswordFunc;
+            resolveFirebase();
+        };
 
-        window.handleLogin = function(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             const pass = document.getElementById('login-password').value;
-            const validPass = localStorage.getItem('app_password');
-            if (pass === validPass) {
-                const loginScreen = document.getElementById('login-screen');
-                loginScreen.style.opacity = '0';
-                setTimeout(() => loginScreen.classList.add('hidden'), 300);
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-                document.getElementById('login-password').value = '';
-                document.getElementById('login-password').focus();
-            }
-        };
-
-        window.changePassword = function(e) {
-            e.preventDefault();
-            const oldPass = document.getElementById('setting-old-pass').value;
-            const newPass = document.getElementById('setting-new-pass').value;
-            const validPass = localStorage.getItem('app_password');
+            const btn = document.getElementById('btn-login');
+            const originalText = btn.innerHTML;
             
-            if (oldPass !== validPass) {
-                showToast('Contraseña actual incorrecta', 'error');
-                return;
+            // Estado de carga
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verificando...';
+            
+            try {
+                // Espera máximo 3 segundos a que Firebase se conecte (por si el internet es lento)
+                const timeout = new Promise(resolve => setTimeout(() => resolve('timeout'), 3000));
+                const fbResult = await Promise.race([window.firebaseLoadedPromise, timeout]);
+                
+                let isValid = false;
+                if (fbResult !== 'timeout' && typeof window.verifyPasswordWithFirebase === 'function') {
+                    // Firebase responderá si la contraseña coincide con la nube
+                    isValid = await window.verifyPasswordWithFirebase(pass);
+                } else {
+                    // Fallback (Si no hay internet, usa la última contraseña guardada en el dispositivo)
+                    const validPass = localStorage.getItem('app_password') || 'hrepuestos';
+                    isValid = (pass === validPass);
+                }
+                
+                if (isValid) {
+                    const loginScreen = document.getElementById('login-screen');
+                    loginScreen.style.opacity = '0';
+                    setTimeout(() => loginScreen.classList.add('hidden'), 300);
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                    document.getElementById('login-password').value = '';
+                    document.getElementById('login-password').focus();
+                }
+            } catch(err) {
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
-            if (newPass.length < 4) {
-                showToast('La nueva contraseña es muy corta', 'error');
-                return;
-            }
-            localStorage.setItem('app_password', newPass);
-            showToast('Contraseña actualizada con éxito', 'success');
-            document.getElementById('setting-old-pass').value = '';
-            document.getElementById('setting-new-pass').value = '';
-        };
-
-        window.toggleStockAlerts = function(checkbox) {
-            localStorage.setItem('stock_alerts', checkbox.checked ? 'true' : 'false');
-            showToast(checkbox.checked ? 'Alertas de stock activadas' : 'Alertas de stock desactivadas', 'info');
-            if(window.renderInventory) window.renderInventory(); // Forzar actualización de UI
-        };
-        
-        // Cargar estado del checkbox de alertas al iniciar
-        window.addEventListener('DOMContentLoaded', () => {
-            const checkbox = document.getElementById('setting-stock-alerts');
-            if(checkbox) checkbox.checked = localStorage.getItem('stock_alerts') !== 'false';
-        });
+        }
     </script>
 </head>
 <body class="text-gray-800 antialiased font-sans flex flex-col h-screen">
@@ -113,7 +114,7 @@
     <div id="login-screen" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-4 transition-opacity duration-300">
         <div class="max-w-sm w-full text-center">
             <!-- LOGO CENTRAL -->
-            <img src="hr.jpeg" alt="Hudson Repuestos" onerror="this.src='https://placehold.co/200x200/0a198f/ffffff?text=HR'" class="w-48 h-48 mx-auto mb-8 rounded-full object-contain shadow-sm border border-gray-100 bg-white">
+            <img src="./hr.png" alt="hudsonrepuestos" onerror="this.src='https://placehold.co/200x200/0a198f/ffffff?text=HR'" class="w-48 h-48 mx-auto mb-8 rounded-full object-contain shadow-sm border border-gray-100 bg-white">
             
             <h2 class="text-2xl font-bold text-hudson-blue mb-6">Acceso al Sistema</h2>
             
@@ -123,37 +124,37 @@
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hudson-blue focus:border-hudson-blue text-center text-lg shadow-sm">
                 </div>
                 <p id="login-error" class="text-red-500 text-sm hidden">Contraseña incorrecta</p>
-                <button type="submit" class="w-full bg-hudson-blue hover:bg-hudson-dark text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors">
+                <button type="submit" id="btn-login" class="w-full bg-hudson-blue hover:bg-hudson-dark text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors">
                     Ingresar
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- Cabecera Superior (Header) -->
-    <header class="bg-hudson-blue text-white shadow-md fixed top-0 w-full z-20 h-16">
-        <div class="relative w-full h-full flex items-center px-4 mx-auto md:max-w-4xl">
-            
-            <!-- Izquierda: Marca de agua (PSM) con borde negro sutil -->
-            <a href="https://psmsaas.github.io/psm/" target="_blank" rel="noopener noreferrer" class="z-30 flex items-center" title="Desarrollado por PSM">
-                <img src="psm.png" alt="PSM" onerror="this.src='https://placehold.co/100x100/ffffff/000000?text=Dev'" class="w-10 h-10 rounded-full border-2 border-black bg-white object-contain p-[2px] opacity-90 hover:opacity-100 transition-opacity">
-            </a>
+    <!-- Cabecera Superior (Header) Centrada Absoluta -->
+    <header class="bg-hudson-blue text-white shadow-md fixed top-0 w-full z-10 h-16 relative flex items-center justify-between px-4">
+        
+        <!-- Izquierda: Marca de agua (PSM) con círculo elegante -->
+        <a href="https://psmsaas.github.io/psm/" target="_blank" rel="noopener noreferrer" class="z-20 flex items-center shrink-0" title="Desarrollado por PSM">
+            <div class="w-10 h-10 rounded-full border-2 border-black bg-white overflow-hidden shadow-sm hover:scale-105 transition-transform duration-300">
+                <img src="./psm.png" alt="PSM" onerror="this.src='https://placehold.co/100x100/ffffff/000000?text=Dev'" class="w-full h-full object-contain p-[2px]">
+            </div>
+        </a>
 
-            <!-- Centro: Logo y Titulo Absolutamente Centrados -->
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div class="flex items-center space-x-2 pointer-events-auto">
-                    <img src="hr.jpeg" alt="Logo" onerror="this.src='https://placehold.co/100x100/0a198f/ffffff?text=HR'" class="w-9 h-9 rounded-full bg-white object-cover shadow-sm">
-                    <div class="flex flex-col text-left">
-                        <h1 class="text-sm font-bold leading-none tracking-wide text-white">HUDSON</h1>
-                        <p class="text-[9px] text-blue-200 tracking-widest uppercase mt-0.5">Repuestos</p>
-                    </div>
+        <!-- Centro: Título y Logo ABSOLUTAMENTE CENTRADOS -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <div class="flex items-center space-x-2 pointer-events-auto">
+                <img src="./hr.png" alt="hudsonrepuestos" onerror="this.src='https://placehold.co/100x100/0a198f/ffffff?text=HR'" class="w-10 h-10 rounded-full bg-white object-cover border border-hudson-light shadow-inner shrink-0">
+                <div class="flex flex-col text-left">
+                    <h1 class="text-sm font-bold leading-none tracking-wide">HUDSON</h1>
+                    <p class="text-[9px] text-blue-200 tracking-widest uppercase mt-0.5">Repuestos</p>
                 </div>
             </div>
+        </div>
 
-            <!-- Derecha: Estado de conexión (Nube) -->
-            <div id="connection-status" class="ml-auto z-30 flex items-center">
-                <i class="fas fa-cloud text-gray-400 text-xl" title="Conectando..."></i>
-            </div>
+        <!-- Derecha: Estado de conexión (Nube) -->
+        <div id="connection-status" class="z-20 shrink-0 w-8 flex items-center justify-end">
+            <i class="fas fa-cloud text-gray-400 text-xl" title="Conectando..."></i>
         </div>
     </header>
 
@@ -220,14 +221,16 @@
                     </div>
                 </div>
 
-                <!-- Agregar Servicio Manual -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">O agregar un Servicio/Otro</label>
-                    <div class="flex space-x-2">
-                        <input type="text" id="custom-service-desc" placeholder="Ej. Mano de obra frenos" class="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue">
-                        <input type="number" id="custom-service-price" placeholder="$ Precio" class="w-32 p-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue">
-                        <button onclick="addCustomServiceToCart()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg">
-                            <i class="fas fa-plus"></i>
+                <!-- Agregar Servicio Manual (MEJORADO SIN BOTÓN APLASTADO) -->
+                <div class="mb-4 mt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">O agregar un Servicio/Otro</label>
+                    <div class="flex flex-col space-y-3">
+                        <div class="flex space-x-2">
+                            <input type="text" id="custom-service-desc" placeholder="Ej. Mano de obra frenos" class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hudson-blue text-sm">
+                            <input type="number" id="custom-service-price" placeholder="$ Precio" class="w-28 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hudson-blue text-sm">
+                        </div>
+                        <button type="button" onclick="addCustomServiceToCart()" class="w-full bg-gray-100 hover:bg-gray-200 text-hudson-blue font-bold py-3 px-4 rounded-lg transition-colors border border-gray-200 flex justify-center items-center">
+                            <i class="fas fa-plus mr-2"></i> Agregar al carrito
                         </button>
                     </div>
                 </div>
@@ -323,9 +326,13 @@
         <section id="view-settings" class="p-4 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-cog text-hudson-blue mr-2"></i>Ajustes</h2>
             
-            <!-- Cambiar Contraseña -->
+            <!-- Cambiar Contraseña Global -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-lock text-gray-400 mr-2"></i>Seguridad</h3>
+                <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">
+                    <i class="fas fa-lock text-gray-400 mr-2"></i>Seguridad
+                </h3>
+                <p class="text-xs text-gray-500 mb-4">Esta contraseña se actualizará en la nube y afectará a todos los dispositivos que usen el sistema.</p>
+                
                 <form onsubmit="changePassword(event)" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña Actual</label>
@@ -335,8 +342,8 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
                         <input type="password" id="setting-new-pass" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm">
                     </div>
-                    <button type="submit" class="w-full bg-hudson-blue hover:bg-hudson-dark text-white font-bold py-2 px-4 rounded-lg shadow transition-colors">
-                        Actualizar Contraseña
+                    <button type="submit" id="btn-change-pass" class="w-full bg-hudson-blue hover:bg-hudson-dark text-white font-bold py-2 px-4 rounded-lg shadow transition-colors">
+                        Actualizar Contraseña Global
                     </button>
                 </form>
             </div>
@@ -359,29 +366,30 @@
     </main>
 
     <!-- Navegación Mobile -->
-    <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full pb-safe z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden h-[70px]">
-        <div class="flex justify-around items-center h-full max-w-md mx-auto">
+    <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full pb-safe z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden">
+        <div class="flex justify-around items-center h-16 max-w-md mx-auto">
             <button onclick="switchView('view-inventory', this)" class="nav-btn w-full h-full flex flex-col items-center justify-center text-hudson-blue font-semibold transition-colors">
                 <i class="fas fa-boxes text-xl mb-1"></i>
-                <span class="text-[10px] mt-1">Inventario</span>
+                <span class="text-xs">Inventario</span>
             </button>
             <button onclick="switchView('view-sales', this)" class="nav-btn w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-hudson-blue transition-colors">
                 <i class="fas fa-cash-register text-xl mb-1"></i>
-                <span class="text-[10px] mt-1">Ventas</span>
+                <span class="text-xs">Ventas</span>
             </button>
             <button onclick="switchView('view-balance', this)" class="nav-btn w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-hudson-blue transition-colors">
                 <i class="fas fa-chart-line text-xl mb-1"></i>
-                <span class="text-[10px] mt-1">Balance</span>
+                <span class="text-xs">Balance</span>
             </button>
+            <!-- Nuevo Botón de Ajustes -->
             <button onclick="switchView('view-settings', this)" class="nav-btn w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-hudson-blue transition-colors">
                 <i class="fas fa-cog text-xl mb-1"></i>
-                <span class="text-[10px] mt-1">Ajustes</span>
+                <span class="text-xs">Ajustes</span>
             </button>
         </div>
     </nav>
     
     <!-- Navegación Escritorio (Desktop) -->
-    <div class="hidden md:flex flex-col fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 shadow-sm z-10">
+    <div class="hidden md:flex flex-col fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 shadow-sm z-0">
         <div class="p-4 space-y-2 mt-4 flex-grow">
             <button onclick="switchView('view-inventory', this)" class="nav-btn-desktop w-full text-left px-4 py-3 rounded-lg flex items-center bg-blue-50 text-hudson-blue font-semibold transition-colors">
                 <i class="fas fa-boxes w-6 text-center mr-3"></i> Inventario
@@ -457,27 +465,29 @@
                     </div>
                 </div>
 
+                <!-- Subida de Imagen -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Imagen del Repuesto (Opcional)</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 relative overflow-hidden group">
-                        <!-- Contenedor para mostrar la imagen seleccionada -->
+                        
                         <img id="image-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-0 opacity-50 group-hover:opacity-30 transition-opacity" alt="Preview">
+                        
                         <div class="space-y-1 text-center relative z-10">
                             <i id="image-placeholder-icon" class="fas fa-camera text-gray-400 text-3xl mb-2"></i>
                             <div class="flex text-sm text-gray-600 justify-center">
                                 <label for="prod-img-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-hudson-blue hover:text-hudson-light focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-hudson-blue px-2 py-1 shadow-sm border border-gray-200">
                                     <span>Tomar foto o subir</span>
+                                    <!-- Acepta imagenes y abre la cámara nativa en móviles -->
                                     <input id="prod-img-upload" type="file" accept="image/*" capture="environment" class="sr-only" onchange="handleImageUpload(event)">
                                 </label>
                             </div>
                             <p id="upload-status-text" class="text-xs text-gray-400 mt-2">Tamaño máximo recomendado: 2MB</p>
-                            <!-- Spinner de carga oculto por defecto -->
+                            <!-- Spinner de carga -->
                             <div id="image-upload-spinner" class="hidden mt-2">
                                 <i class="fas fa-spinner fa-spin text-hudson-blue text-xl"></i>
                             </div>
                         </div>
                     </div>
-                    <!-- Campo oculto para guardar la URL final generada por Firebase -->
                     <input type="hidden" id="prod-img-url" value="">
                 </div>
 
@@ -494,14 +504,20 @@
     </div>
 
     <!-- Contenedor de Notificaciones (Toasts) -->
-    <div id="toast-container" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 md:bottom-10 md:left-auto md:right-10 md:transform-none z-50 flex flex-col gap-2"></div>
+    <div id="toast-container" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 md:bottom-10 md:left-auto md:right-10 md:transform-none z-50 flex flex-col gap-2"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { 
+            getFirestore, collection, doc, setDoc, updateDoc, 
+            onSnapshot, runTransaction, serverTimestamp, getDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { 
+            getStorage, ref, uploadBytesResumable, getDownloadURL 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
+        // Variables de Estado Globales
         window.inventory = [];
         window.salesHistory = [];
         window.cart = [];
@@ -522,18 +538,29 @@
         // =========================================================================
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'hudson-repuestos-v1';
-        let firebaseConfigToUse = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : firebaseConfig;
+        
+        let firebaseConfigToUse;
+        if (typeof __firebase_config !== 'undefined') {
+            firebaseConfigToUse = JSON.parse(__firebase_config);
+        } else {
+            firebaseConfigToUse = firebaseConfig;
+        }
 
         let auth, db, storage, userId;
 
-        function getCollectionRef(colName) { return collection(db, 'artifacts', appId, 'public', 'data', colName); }
-        function getDocRef(colName, docId) { return doc(db, 'artifacts', appId, 'public', 'data', colName, docId); }
+        function getCollectionRef(colName) { 
+            return collection(db, 'artifacts', appId, 'public', 'data', colName); 
+        }
+        function getDocRef(colName, docId) { 
+            return doc(db, 'artifacts', appId, 'public', 'data', colName, docId); 
+        }
 
         async function initFirebase() {
             try {
                 if (firebaseConfigToUse.apiKey === "TU_API_KEY" && typeof __firebase_config === 'undefined') {
-                    throw new Error("Falta configurar Firebase. Se usará el modo local.");
+                    throw new Error("Falta configurar Firebase. Se usará el modo local de prueba.");
                 }
+
                 const app = initializeApp(firebaseConfigToUse);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -546,15 +573,111 @@
                 }
                 
                 userId = auth.currentUser.uid;
-                document.getElementById('connection-status').innerHTML = `<i class="fas fa-cloud text-green-400 text-xl" title="Sincronizado en la nube"></i>`;
+                
+                document.getElementById('connection-status').innerHTML = `
+                    <i class="fas fa-cloud text-green-400 text-xl" title="Sincronizado en la nube"></i>
+                `;
                 return true;
             } catch (error) {
                 console.warn(error.message);
-                document.getElementById('connection-status').innerHTML = `<i class="fas fa-cloud text-red-500 text-xl" title="Sin conexión (Modo Local)"></i>`;
+                document.getElementById('connection-status').innerHTML = `
+                    <i class="fas fa-cloud text-red-500 text-xl" title="Sin conexión (Modo Local)"></i>
+                `;
                 renderInventory(); updateBalanceCards(); renderSalesHistory();
                 return false;
             }
         }
+
+        // Ejecutamos Firebase de inmediato
+        initFirebase().then((isConnected) => {
+            
+            // Si el script de login cargó antes, le indicamos que ya puede buscar en la DB
+            if (window.onFirebaseLoaded) {
+                window.onFirebaseLoaded(async (inputPassword) => {
+                    let validPass = 'hrepuestos';
+                    if (db) {
+                        try {
+                            const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
+                            const configSnap = await getDoc(configRef);
+                            if (configSnap.exists() && configSnap.data().app_password) {
+                                validPass = configSnap.data().app_password;
+                            } else {
+                                // Si no existe el documento, lo creamos con la por defecto
+                                await setDoc(configRef, { app_password: 'hrepuestos' }, { merge: true });
+                            }
+                            localStorage.setItem('app_password', validPass); // Sincroniza localmente
+                        } catch(e) {
+                            console.error("Error leyendo password de DB", e);
+                            validPass = localStorage.getItem('app_password') || 'hrepuestos';
+                        }
+                    } else {
+                        validPass = localStorage.getItem('app_password') || 'hrepuestos';
+                    }
+                    return inputPassword === validPass;
+                });
+            }
+
+            if (isConnected) {
+                subscribeToInventory();
+                subscribeToSales();
+            }
+            
+            // Render Inicial UI
+            switchView('view-inventory');
+            const checkbox = document.getElementById('setting-stock-alerts');
+            if(checkbox) checkbox.checked = localStorage.getItem('stock_alerts') !== 'false';
+        });
+
+        // ================= CAMBIO DE CONTRASEÑA GLOBAL =================
+        window.changePassword = async function(e) {
+            e.preventDefault();
+            const oldPass = document.getElementById('setting-old-pass').value;
+            const newPass = document.getElementById('setting-new-pass').value;
+            const btn = document.getElementById('btn-change-pass');
+            const originalBtnText = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Validando...';
+            
+            let validPass = 'hrepuestos';
+            try {
+                if (db) {
+                    const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
+                    const configSnap = await getDoc(configRef);
+                    if (configSnap.exists() && configSnap.data().app_password) {
+                        validPass = configSnap.data().app_password;
+                    }
+                } else {
+                    validPass = localStorage.getItem('app_password') || 'hrepuestos';
+                }
+                
+                if (oldPass !== validPass) {
+                    showToast('Contraseña actual incorrecta', 'error');
+                    btn.disabled = false; btn.innerHTML = originalBtnText; return;
+                }
+                if (newPass.length < 4) {
+                    showToast('La contraseña debe tener al menos 4 caracteres', 'error');
+                    btn.disabled = false; btn.innerHTML = originalBtnText; return;
+                }
+                
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
+                
+                if (db) {
+                    const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
+                    await setDoc(configRef, { app_password: newPass }, { merge: true });
+                }
+                localStorage.setItem('app_password', newPass); 
+                
+                showToast('Contraseña global actualizada con éxito', 'success');
+                document.getElementById('setting-old-pass').value = '';
+                document.getElementById('setting-new-pass').value = '';
+            } catch (error) {
+                console.error("Error al cambiar contraseña", error);
+                showToast('Hubo un error al actualizar', 'error');
+            } finally {
+                btn.disabled = false; btn.innerHTML = originalBtnText;
+            }
+        };
 
         function subscribeToInventory() {
             if(!db || !auth.currentUser) return;
@@ -654,10 +777,17 @@
             }, 3000);
         };
 
+        window.toggleStockAlerts = function(checkbox) {
+            localStorage.setItem('stock_alerts', checkbox.checked ? 'true' : 'false');
+            showToast(checkbox.checked ? 'Alertas de stock activadas' : 'Alertas de stock desactivadas', 'info');
+            renderInventory(); // Forzar actualización visual
+        };
+
         window.handleImageUpload = async function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
+            // Previsualización instantánea local
             const reader = new FileReader();
             reader.onload = (e) => {
                 document.getElementById('image-preview').src = e.target.result;
@@ -682,6 +812,7 @@
             statusText.className = "text-xs text-hudson-blue mt-2 text-center font-semibold";
 
             try {
+                // Crear referencia en Firebase Storage
                 const fileExt = file.name.split('.').pop();
                 const fileName = `repuestos/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                 const storageRef = ref(storage, fileName);
@@ -701,6 +832,7 @@
                         btnGuardar.classList.remove('opacity-50', 'cursor-wait');
                     }, 
                     async () => {
+                        // Obtener URL final pública
                         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                         document.getElementById('prod-img-url').value = downloadURL;
                         statusText.innerText = "¡Foto guardada y lista!";
@@ -773,7 +905,6 @@
                 alertBanner.classList.add('hidden');
             }
 
-            // Filtrado normal
             const filtered = window.inventory.filter(p => p.name.toLowerCase().includes(filterText.toLowerCase()) || p.code.toLowerCase().includes(filterText.toLowerCase()));
             if (filtered.length === 0) { emptyMsg.style.display = 'block'; list.appendChild(emptyMsg); return; }
             emptyMsg.style.display = 'none';
@@ -989,12 +1120,6 @@
                 tbody.appendChild(tr);
             });
         }
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            const isConnected = await initFirebase();
-            if (isConnected) { subscribeToInventory(); subscribeToSales(); }
-            switchView('view-inventory');
-        });
     </script>
 </body>
 </html>
