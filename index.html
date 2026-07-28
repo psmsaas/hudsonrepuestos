@@ -17,7 +17,7 @@
             theme: {
                 extend: {
                     colors: {
-                        'hudson-blue': '#0a198f', // Azul basado en el logo
+                        'hudson-blue': '#0a198f',
                         'hudson-light': '#3b4cc4',
                         'hudson-dark': '#060f5c',
                     },
@@ -32,35 +32,30 @@
         body {
             background-color: #f3f4f6;
             margin: 0;
-            padding-bottom: 70px; /* Espacio para la barra inferior en móviles */
+            padding-bottom: 70px;
         }
-        /* Ocultar barra de desplazamiento pero permitir scroll */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Animaciones para los Toasts (Notificaciones) */
         .toast-enter { transform: translateY(100%); opacity: 0; }
         .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 300ms ease-out; }
         .toast-exit { transform: translateY(0); opacity: 1; }
         .toast-exit-active { transform: translateY(100%); opacity: 0; transition: all 300ms ease-in; }
 
-        /* Ajuste de margen para main en Escritorio */
         @media (min-width: 768px) {
             main#main-content {
-                margin-left: 16rem; /* Ancho del sidebar */
+                margin-left: 16rem;
                 max-width: calc(100% - 16rem);
             }
             body { padding-bottom: 0; }
         }
     </style>
 
-    <!-- SCRIPT DE LOGIN AISLADO (Carga instantánea) -->
+    <!-- SCRIPT DE LOGIN AISLADO -->
     <script>
-        // Esta promesa se resolverá cuando Firebase esté listo para validar contraseñas de la nube
         let resolveFirebase;
         window.firebaseLoadedPromise = new Promise(resolve => { resolveFirebase = resolve; });
         
-        // Esta función será llamada desde el módulo de Firebase cuando cargue
         window.onFirebaseLoaded = function(checkPasswordFunc) {
             window.verifyPasswordWithFirebase = checkPasswordFunc;
             resolveFirebase();
@@ -72,21 +67,17 @@
             const btn = document.getElementById('btn-login');
             const originalText = btn.innerHTML;
             
-            // Estado de carga
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verificando...';
             
             try {
-                // Espera máximo 3 segundos a que Firebase conecte
                 const timeout = new Promise(resolve => setTimeout(() => resolve('timeout'), 3000));
                 const fbResult = await Promise.race([window.firebaseLoadedPromise, timeout]);
                 
                 let isValid = false;
                 if (fbResult !== 'timeout' && typeof window.verifyPasswordWithFirebase === 'function') {
-                    // Consulta a la nube
                     isValid = await window.verifyPasswordWithFirebase(pass);
                 } else {
-                    // Fallback local si no hay internet
                     const validPass = localStorage.getItem('app_password') || 'hrepuestos';
                     isValid = (pass === validPass);
                 }
@@ -114,15 +105,11 @@
     <!-- Pantalla de Login -->
     <div id="login-screen" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-4 transition-opacity duration-300">
         <div class="max-w-sm w-full text-center">
-            <!-- LOGO CENTRAL -->
             <img src="hr.png" alt="hudsonrepuestos" onerror="this.src='https://placehold.co/200x200/0a198f/ffffff?text=HR'" class="w-48 h-48 mx-auto mb-8 rounded-full object-contain shadow-sm border border-gray-100 bg-white">
-            
             <h2 class="text-2xl font-bold text-hudson-blue mb-6">Acceso al Sistema</h2>
-            
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <input type="password" id="login-password" required placeholder="Contraseña" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hudson-blue focus:border-hudson-blue text-center text-lg shadow-sm">
+                    <input type="password" id="login-password" required placeholder="Contraseña" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hudson-blue focus:border-hudson-blue text-center text-lg shadow-sm">
                 </div>
                 <p id="login-error" class="text-red-500 text-sm hidden">Contraseña incorrecta</p>
                 <button type="submit" id="btn-login" class="w-full bg-hudson-blue hover:bg-hudson-dark text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors">
@@ -132,17 +119,14 @@
         </div>
     </div>
 
-    <!-- Cabecera Superior (Header) Centrada Absoluta -->
+    <!-- Cabecera Superior -->
     <header class="bg-hudson-blue text-white shadow-md fixed top-0 w-full z-10 h-16 relative flex items-center justify-between px-4">
-        
-        <!-- Izquierda: Marca de agua (PSM) con círculo elegante -->
-        <a href="https://psmsaas.github.io/psm/" target="_blank" rel="noopener noreferrer" class="z-20 flex items-center shrink-0" title="Desarrollado por PSM">
+        <a href="https://psmsaas.github.io/psm/" target="_blank" rel="noopener noreferrer" class="z-20 flex items-center shrink-0">
             <div class="w-10 h-10 rounded-full border-2 border-black bg-white overflow-hidden shadow-sm hover:scale-105 transition-transform duration-300">
                 <img src="psm.png" alt="PSM" onerror="this.src='https://placehold.co/100x100/ffffff/000000?text=Dev'" class="w-full h-full object-contain p-[2px]">
             </div>
         </a>
 
-        <!-- Centro: Título y Logo ABSOLUTAMENTE CENTRADOS -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <div class="flex items-center space-x-2 pointer-events-auto">
                 <img src="hr.png" alt="hudsonrepuestos" onerror="this.src='https://placehold.co/100x100/0a198f/ffffff?text=HR'" class="w-10 h-10 rounded-full bg-white object-cover border border-hudson-light shadow-inner shrink-0">
@@ -153,7 +137,6 @@
             </div>
         </div>
 
-        <!-- Derecha: Estado de conexión (Nube) -->
         <div id="connection-status" class="z-20 shrink-0 w-8 flex items-center justify-end">
             <i class="fas fa-cloud text-gray-400 text-xl" title="Conectando..."></i>
         </div>
@@ -171,7 +154,6 @@
                 </button>
             </div>
 
-            <!-- Banner de Alerta de Stock (Oculto por defecto) -->
             <div id="stock-alert-banner" class="hidden mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-sm" role="alert">
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-triangle mr-3 text-2xl"></i>
@@ -182,7 +164,6 @@
                 </div>
             </div>
 
-            <!-- Buscador -->
             <div class="relative mb-6 shadow-sm rounded-lg">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fas fa-search text-gray-400"></i>
@@ -190,10 +171,8 @@
                 <input type="text" id="search-inventory" class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm" placeholder="Buscar por código o nombre..." onkeyup="filterInventory()">
             </div>
 
-            <!-- Lista de Productos -->
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <ul id="inventory-list" class="divide-y divide-gray-200">
-                    <!-- Productos se cargan aquí dinámicamente -->
                     <li class="p-6 text-center text-gray-500 py-10" id="empty-inventory-msg">
                         <i class="fas fa-box-open text-4xl mb-3 text-gray-300"></i>
                         <p>No hay productos en el inventario.</p>
@@ -208,7 +187,6 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-cash-register text-hudson-blue mr-2"></i>Nueva Venta</h2>
             
             <div class="bg-white rounded-xl shadow-md p-4 mb-6">
-                <!-- Buscador para Venta -->
                 <div class="mb-4 relative z-20">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Producto para Vender</label>
                     <div class="relative">
@@ -216,13 +194,10 @@
                             <i class="fas fa-barcode text-gray-400"></i>
                         </div>
                         <input type="text" id="sale-search" class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hudson-blue" placeholder="Código o Nombre del Repuesto..." oninput="searchForSale(this.value)" autocomplete="off">
-                        
-                        <!-- Resultados de Búsqueda -->
                         <ul id="sale-search-results" class="absolute z-30 w-full bg-white mt-1 border border-gray-200 rounded-md shadow-lg hidden max-h-60 overflow-y-auto no-scrollbar"></ul>
                     </div>
                 </div>
 
-                <!-- Agregar Servicio Manual Mejorado -->
                 <div class="mb-4 mt-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">O agregar un Servicio/Otro</label>
                     <div class="flex flex-col space-y-3">
@@ -230,7 +205,6 @@
                             <input type="text" id="custom-service-desc" placeholder="Ej. Mano de obra frenos" class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hudson-blue text-sm">
                             <input type="number" id="custom-service-price" placeholder="$ Precio" class="w-28 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hudson-blue text-sm">
                         </div>
-                        <!-- Botón de Ancho Completo en lugar del + aplastado -->
                         <button type="button" onclick="addCustomServiceToCart()" class="w-full bg-gray-100 hover:bg-gray-200 text-hudson-blue font-bold py-3 px-4 rounded-lg transition-colors border border-gray-200 flex justify-center items-center">
                             <i class="fas fa-plus mr-2"></i> Agregar al carrito
                         </button>
@@ -238,7 +212,6 @@
                 </div>
             </div>
 
-            <!-- Carrito Actual -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col h-full">
                 <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-700">Detalle de Venta</h3>
@@ -266,9 +239,7 @@
         <section id="view-balance" class="p-4 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-chart-line text-hudson-blue mr-2"></i>Balance y Reportes</h2>
 
-            <!-- Tarjetas de Resumen -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <!-- Valor Total del Inventario -->
                 <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-hudson-blue">
                     <div class="flex items-center justify-between">
                         <div>
@@ -282,7 +253,6 @@
                     <p class="text-xs text-gray-500 mt-4" id="total-items-count">0 artículos en total</p>
                 </div>
 
-                <!-- Ganancia Estimada -->
                 <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
                     <div class="flex items-center justify-between">
                         <div>
@@ -297,7 +267,6 @@
                 </div>
             </div>
 
-            <!-- Historial de Ventas Recientes -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                     <h3 class="text-lg font-bold text-gray-800">Últimas Ventas</h3>
@@ -328,7 +297,6 @@
         <section id="view-settings" class="p-4 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-cog text-hudson-blue mr-2"></i>Ajustes</h2>
             
-            <!-- Cambiar Contraseña Global -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">
                     <i class="fas fa-lock text-gray-400 mr-2"></i>Seguridad
@@ -350,7 +318,6 @@
                 </form>
             </div>
 
-            <!-- Notificaciones (Alertas de Stock) -->
             <div class="bg-white rounded-xl shadow-md p-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-bell text-gray-400 mr-2"></i>Notificaciones</h3>
                 <div class="flex items-center justify-between">
@@ -389,7 +356,7 @@
         </div>
     </nav>
     
-    <!-- Navegación Escritorio (Desktop) -->
+    <!-- Navegación Escritorio -->
     <div class="hidden md:flex flex-col fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 shadow-sm z-0">
         <div class="p-4 space-y-2 mt-4 flex-grow">
             <button onclick="switchView('view-inventory', this)" class="nav-btn-desktop w-full text-left px-4 py-3 rounded-lg flex items-center bg-blue-50 text-hudson-blue font-semibold transition-colors">
@@ -466,7 +433,7 @@
                     </div>
                 </div>
 
-                <!-- Subida de Imagen Mejorada -->
+                <!-- Subida de Imagen por Base64 Ultra Rápida -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Imagen del Repuesto (Opcional)</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 relative overflow-hidden group">
@@ -481,7 +448,7 @@
                                     <input id="prod-img-upload" type="file" accept="image/*" capture="environment" class="sr-only" onchange="handleImageUpload(event)">
                                 </label>
                             </div>
-                            <p id="upload-status-text" class="text-xs text-gray-400 mt-2">Compresión rápida automática</p>
+                            <p id="upload-status-text" class="text-xs text-gray-400 mt-2">Carga local instantánea</p>
                             <!-- Spinner de carga -->
                             <div id="image-upload-spinner" class="hidden mt-2">
                                 <i class="fas fa-spinner fa-spin text-hudson-blue text-xl"></i>
@@ -503,7 +470,7 @@
         </div>
     </div>
 
-    <!-- Contenedor de Notificaciones (Toasts) -->
+    <!-- Contenedor de Notificaciones -->
     <div id="toast-container" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 md:bottom-10 md:left-auto md:right-10 md:transform-none z-50 flex flex-col gap-2"></div>
 
     <script type="module">
@@ -513,18 +480,12 @@
             getFirestore, collection, doc, setDoc, updateDoc, 
             onSnapshot, runTransaction, serverTimestamp, getDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { 
-            getStorage, ref, uploadBytesResumable, getDownloadURL 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Variables de Estado Globales
         window.inventory = [];
         window.salesHistory = [];
         window.cart = [];
 
-        // =========================================================================
         // 👇👇👇 PEGA TU CONFIGURACIÓN DE FIREBASE AQUÍ 👇👇👇
-        // =========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyDnuQW4nK09wlfA2M2frDLQDC7IWfBjBxE",
             authDomain: "sistema-hr-f8935.firebaseapp.com",
@@ -533,56 +494,34 @@
             messagingSenderId: "1069269889005",
             appId: "1:1069269889005:web:532af64187019375c681e4"
         };
-        // =========================================================================
         // 👆👆👆 HASTA AQUÍ 👆👆👆
-        // =========================================================================
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'hudson-repuestos-v1';
-        
-        let firebaseConfigToUse;
-        if (typeof __firebase_config !== 'undefined') {
-            firebaseConfigToUse = JSON.parse(__firebase_config);
-        } else {
-            firebaseConfigToUse = firebaseConfig;
-        }
+        let firebaseConfigToUse = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
 
-        let auth, db, storage, userId;
+        let auth, db, userId;
 
-        function getCollectionRef(colName) { 
-            return collection(db, 'artifacts', appId, 'public', 'data', colName); 
-        }
-        function getDocRef(colName, docId) { 
-            return doc(db, 'artifacts', appId, 'public', 'data', colName, docId); 
-        }
+        function getCollectionRef(colName) { return collection(db, 'artifacts', appId, 'public', 'data', colName); }
+        function getDocRef(colName, docId) { return doc(db, 'artifacts', appId, 'public', 'data', colName, docId); }
 
         async function initFirebase() {
             try {
                 if (firebaseConfigToUse.apiKey === "TU_API_KEY" && typeof __firebase_config === 'undefined') {
-                    throw new Error("Falta configurar Firebase. Se usará el modo local de prueba.");
+                    throw new Error("Modo local");
                 }
-
                 const app = initializeApp(firebaseConfigToUse);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                storage = getStorage(app); 
 
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth); 
-                }
+                if (typeof __initial_auth_token !== 'undefined') await signInWithCustomToken(auth, __initial_auth_token);
+                else await signInAnonymously(auth); 
                 
                 userId = auth.currentUser.uid;
-                
-                document.getElementById('connection-status').innerHTML = `
-                    <i class="fas fa-cloud text-green-400 text-xl" title="Sincronizado en la nube"></i>
-                `;
+                document.getElementById('connection-status').innerHTML = `<i class="fas fa-cloud text-green-400 text-xl" title="Sincronizado"></i>`;
                 return true;
             } catch (error) {
                 console.warn(error.message);
-                document.getElementById('connection-status').innerHTML = `
-                    <i class="fas fa-cloud text-red-500 text-xl" title="Sin conexión (Modo Local)"></i>
-                `;
+                document.getElementById('connection-status').innerHTML = `<i class="fas fa-cloud text-red-500 text-xl" title="Sin conexión"></i>`;
                 renderInventory(); updateBalanceCards(); renderSalesHistory();
                 return false;
             }
@@ -596,16 +535,10 @@
                         try {
                             const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
                             const configSnap = await getDoc(configRef);
-                            if (configSnap.exists() && configSnap.data().app_password) {
-                                validPass = configSnap.data().app_password;
-                            } else {
-                                await setDoc(configRef, { app_password: 'hrepuestos' }, { merge: true });
-                            }
+                            if (configSnap.exists() && configSnap.data().app_password) validPass = configSnap.data().app_password;
+                            else await setDoc(configRef, { app_password: 'hrepuestos' }, { merge: true });
                             localStorage.setItem('app_password', validPass); 
-                        } catch(e) {
-                            console.error("Error leyendo password de DB", e);
-                            validPass = localStorage.getItem('app_password') || 'hrepuestos';
-                        }
+                        } catch(e) { validPass = localStorage.getItem('app_password') || 'hrepuestos'; }
                     } else {
                         validPass = localStorage.getItem('app_password') || 'hrepuestos';
                     }
@@ -613,11 +546,7 @@
                 });
             }
 
-            if (isConnected) {
-                subscribeToInventory();
-                subscribeToSales();
-            }
-            
+            if (isConnected) { subscribeToInventory(); subscribeToSales(); }
             switchView('view-inventory');
             const checkbox = document.getElementById('setting-stock-alerts');
             if(checkbox) checkbox.checked = localStorage.getItem('stock_alerts') !== 'false';
@@ -631,47 +560,28 @@
             const btn = document.getElementById('btn-change-pass');
             const originalBtnText = btn.innerHTML;
             
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Validando...';
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Validando...';
             
             let validPass = 'hrepuestos';
             try {
                 if (db) {
                     const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
                     const configSnap = await getDoc(configRef);
-                    if (configSnap.exists() && configSnap.data().app_password) {
-                        validPass = configSnap.data().app_password;
-                    }
-                } else {
-                    validPass = localStorage.getItem('app_password') || 'hrepuestos';
-                }
+                    if (configSnap.exists() && configSnap.data().app_password) validPass = configSnap.data().app_password;
+                } else { validPass = localStorage.getItem('app_password') || 'hrepuestos'; }
                 
-                if (oldPass !== validPass) {
-                    showToast('Contraseña actual incorrecta', 'error');
-                    btn.disabled = false; btn.innerHTML = originalBtnText; return;
-                }
-                if (newPass.length < 4) {
-                    showToast('La contraseña debe tener al menos 4 caracteres', 'error');
-                    btn.disabled = false; btn.innerHTML = originalBtnText; return;
-                }
+                if (oldPass !== validPass) { showToast('Contraseña actual incorrecta', 'error'); btn.disabled = false; btn.innerHTML = originalBtnText; return; }
+                if (newPass.length < 4) { showToast('Mínimo 4 caracteres', 'error'); btn.disabled = false; btn.innerHTML = originalBtnText; return; }
                 
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
-                
                 if (db) {
                     const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
                     await setDoc(configRef, { app_password: newPass }, { merge: true });
                 }
                 localStorage.setItem('app_password', newPass); 
-                
-                showToast('Contraseña global actualizada con éxito', 'success');
-                document.getElementById('setting-old-pass').value = '';
-                document.getElementById('setting-new-pass').value = '';
-            } catch (error) {
-                console.error("Error al cambiar contraseña", error);
-                showToast('Hubo un error al actualizar', 'error');
-            } finally {
-                btn.disabled = false; btn.innerHTML = originalBtnText;
-            }
+                showToast('Contraseña actualizada', 'success');
+                document.getElementById('setting-old-pass').value = ''; document.getElementById('setting-new-pass').value = '';
+            } catch (error) { showToast('Error al actualizar', 'error'); } finally { btn.disabled = false; btn.innerHTML = originalBtnText; }
         };
 
         function subscribeToInventory() {
@@ -681,7 +591,7 @@
                 snapshot.forEach((doc) => { window.inventory.push({ id: doc.id, ...doc.data() }); });
                 window.inventory.sort((a, b) => a.name.localeCompare(b.name));
                 renderInventory(); updateBalanceCards();
-            }, (error) => console.error("Error leyendo inventario:", error));
+            });
         }
 
         function subscribeToSales() {
@@ -695,7 +605,7 @@
                 });
                 window.salesHistory.sort((a, b) => b.date - a.date);
                 renderSalesHistory();
-            }, (error) => console.error("Error leyendo ventas:", error));
+            });
         }
 
         window.switchView = function(viewId, btnElement) {
@@ -728,7 +638,7 @@
                 document.getElementById('image-placeholder-icon').classList.remove('hidden');
                 document.getElementById('image-preview').src = "";
                 document.getElementById('prod-img-url').value = "";
-                document.getElementById('upload-status-text').innerText = "Compresión rápida automática";
+                document.getElementById('upload-status-text').innerText = "Carga local instantánea";
                 document.getElementById('upload-status-text').className = "text-xs text-gray-400 mt-2 text-center";
 
                 if (productId) {
@@ -778,8 +688,10 @@
             renderInventory(); 
         };
 
-        // Función Helper para Comprimir Imágenes
-        async function compressImage(file, maxWidth, maxHeight, quality) {
+        // =======================================================================
+        // COMPRESOR BASE64 INSTANTÁNEO (No requiere Firebase Storage)
+        // =======================================================================
+        async function compressToBase64(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -802,13 +714,11 @@
                                 height = maxHeight;
                             }
                         }
-
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-
-                        canvas.toBlob(blob => { resolve(blob); }, 'image/jpeg', quality);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
                     };
                     img.onerror = error => reject(error);
                 };
@@ -820,20 +730,6 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            // Previsualización local
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('image-preview').src = e.target.result;
-                document.getElementById('image-preview').classList.remove('hidden');
-                document.getElementById('image-placeholder-icon').classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
-
-            if (!storage) {
-                showToast("Modo local: La imagen no se guardará en la nube", "error");
-                return;
-            }
-
             const spinner = document.getElementById('image-upload-spinner');
             const statusText = document.getElementById('upload-status-text');
             const btnGuardar = document.getElementById('btn-save-product');
@@ -841,46 +737,25 @@
             spinner.classList.remove('hidden');
             btnGuardar.disabled = true; 
             btnGuardar.classList.add('opacity-50', 'cursor-wait');
-            statusText.innerText = "Optimizando imagen para mayor velocidad...";
+            statusText.innerText = "Procesando imagen...";
             statusText.className = "text-xs text-hudson-blue mt-2 text-center font-semibold";
 
             try {
-                // Compresión (Max 800px, 70% calidad) - Pasa de 5MB a ~100KB instantáneamente
-                const compressedBlob = await compressImage(file, 800, 800, 0.7);
-
-                const fileName = `repuestos/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-                const storageRef = ref(storage, fileName);
+                // Comprime la imagen y la convierte a texto plano al instante
+                const base64String = await compressToBase64(file, 400, 400, 0.6);
                 
-                statusText.innerText = "Subiendo a la nube...";
-                const uploadTask = uploadBytesResumable(storageRef, compressedBlob);
+                document.getElementById('image-preview').src = base64String;
+                document.getElementById('image-preview').classList.remove('hidden');
+                document.getElementById('image-placeholder-icon').classList.add('hidden');
+                document.getElementById('prod-img-url').value = base64String;
 
-                uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        statusText.innerText = `Subiendo... ${Math.round(progress)}%`;
-                    }, 
-                    (error) => {
-                        console.error("Error subiendo imagen:", error);
-                        statusText.innerText = "Error: Verifica las Reglas de Storage en Firebase.";
-                        statusText.className = "text-xs text-red-500 mt-2 text-center font-bold";
-                        spinner.classList.add('hidden');
-                        btnGuardar.disabled = false;
-                        btnGuardar.classList.remove('opacity-50', 'cursor-wait');
-                    }, 
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        document.getElementById('prod-img-url').value = downloadURL;
-                        statusText.innerText = "¡Foto guardada y lista!";
-                        statusText.className = "text-xs text-green-500 mt-2 text-center font-bold";
-                        spinner.classList.add('hidden');
-                        btnGuardar.disabled = false;
-                        btnGuardar.classList.remove('opacity-50', 'cursor-wait');
-                    }
-                );
+                statusText.innerText = "¡Foto lista!";
+                statusText.className = "text-xs text-green-500 mt-2 text-center font-bold";
             } catch (error) {
-                console.error("Error general de imagen", error);
+                console.error(error);
                 statusText.innerText = "Error al procesar la foto.";
                 statusText.className = "text-xs text-red-500 mt-2 text-center";
+            } finally {
                 spinner.classList.add('hidden');
                 btnGuardar.disabled = false;
                 btnGuardar.classList.remove('opacity-50', 'cursor-wait');
