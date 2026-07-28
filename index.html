@@ -121,12 +121,14 @@
 
     <!-- Cabecera Superior -->
     <header class="bg-hudson-blue text-white shadow-md fixed top-0 w-full z-10 h-16 relative flex items-center justify-between px-4">
+        <!-- Marca de Agua Superior Izquierda -->
         <a href="https://psmsaas.github.io/psm/" target="_blank" rel="noopener noreferrer" class="z-20 flex items-center shrink-0">
             <div class="w-10 h-10 rounded-full border-2 border-black bg-white overflow-hidden shadow-sm hover:scale-105 transition-transform duration-300">
                 <img src="psm.png" alt="PSM" onerror="this.src='https://placehold.co/100x100/ffffff/000000?text=Dev'" class="w-full h-full object-contain p-[2px]">
             </div>
         </a>
 
+        <!-- Logo y Nombre Centrados Absolutamente -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <div class="flex items-center space-x-2 pointer-events-auto">
                 <img src="hr.png" alt="hudsonrepuestos" onerror="this.src='https://placehold.co/100x100/0a198f/ffffff?text=HR'" class="w-10 h-10 rounded-full bg-white object-cover border border-hudson-light shadow-inner shrink-0">
@@ -137,6 +139,7 @@
             </div>
         </div>
 
+        <!-- Estado de Conexión -->
         <div id="connection-status" class="z-20 shrink-0 w-8 flex items-center justify-end">
             <i class="fas fa-cloud text-gray-400 text-xl" title="Conectando..."></i>
         </div>
@@ -154,6 +157,7 @@
                 </button>
             </div>
 
+            <!-- Banner Alerta Stock -->
             <div id="stock-alert-banner" class="hidden mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-sm" role="alert">
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-triangle mr-3 text-2xl"></i>
@@ -507,7 +511,7 @@
         async function initFirebase() {
             try {
                 if (firebaseConfigToUse.apiKey === "TU_API_KEY" && typeof __firebase_config === 'undefined') {
-                    throw new Error("Modo local");
+                    throw new Error("Modo local de prueba");
                 }
                 const app = initializeApp(firebaseConfigToUse);
                 auth = getAuth(app);
@@ -552,7 +556,6 @@
             if(checkbox) checkbox.checked = localStorage.getItem('stock_alerts') !== 'false';
         });
 
-        // ================= CAMBIO DE CONTRASEÑA GLOBAL =================
         window.changePassword = async function(e) {
             e.preventDefault();
             const oldPass = document.getElementById('setting-old-pass').value;
@@ -579,9 +582,13 @@
                     await setDoc(configRef, { app_password: newPass }, { merge: true });
                 }
                 localStorage.setItem('app_password', newPass); 
-                showToast('Contraseña actualizada', 'success');
+                showToast('Contraseña actualizada con éxito', 'success');
                 document.getElementById('setting-old-pass').value = ''; document.getElementById('setting-new-pass').value = '';
-            } catch (error) { showToast('Error al actualizar', 'error'); } finally { btn.disabled = false; btn.innerHTML = originalBtnText; }
+            } catch (error) { 
+                showToast('Error al actualizar', 'error'); 
+            } finally { 
+                btn.disabled = false; btn.innerHTML = originalBtnText; 
+            }
         };
 
         function subscribeToInventory() {
@@ -688,9 +695,7 @@
             renderInventory(); 
         };
 
-        // =======================================================================
-        // COMPRESOR BASE64 INSTANTÁNEO (No requiere Firebase Storage)
-        // =======================================================================
+        // Compresor de imágenes para garantizar compatibilidad con límite de tamaño de Firebase (1 MB)
         async function compressToBase64(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -705,12 +710,12 @@
 
                         if (width > height) {
                             if (width > maxWidth) {
-                                height = Math.round((height *= maxWidth / width));
+                                height = Math.round(height * (maxWidth / width));
                                 width = maxWidth;
                             }
                         } else {
                             if (height > maxHeight) {
-                                width = Math.round((width *= maxHeight / height));
+                                width = Math.round(width * (maxHeight / height));
                                 height = maxHeight;
                             }
                         }
@@ -737,11 +742,11 @@
             spinner.classList.remove('hidden');
             btnGuardar.disabled = true; 
             btnGuardar.classList.add('opacity-50', 'cursor-wait');
-            statusText.innerText = "Procesando imagen...";
+            statusText.innerText = "Optimizando foto...";
             statusText.className = "text-xs text-hudson-blue mt-2 text-center font-semibold";
 
             try {
-                // Comprime la imagen y la convierte a texto plano al instante
+                // Compresión muy agresiva (400x400 a 60% calidad) para garantizar tamaño pequeño
                 const base64String = await compressToBase64(file, 400, 400, 0.6);
                 
                 document.getElementById('image-preview').src = base64String;
@@ -771,12 +776,12 @@
                 cost: parseFloat(document.getElementById('prod-cost').value),
                 price: parseFloat(document.getElementById('prod-price').value),
                 qty: parseInt(document.getElementById('prod-qty').value),
-                img: document.getElementById('prod-img-url').value || "", 
-                updatedAt: db ? serverTimestamp() : new Date().getTime()
+                img: document.getElementById('prod-img-url').value || ""
             };
 
             try {
                 if (db && auth.currentUser) {
+                    productData.updatedAt = serverTimestamp();
                     if (id) {
                         await updateDoc(getDocRef('inventory', id), productData);
                         showToast("Producto actualizado");
@@ -786,17 +791,23 @@
                         showToast("Producto agregado a la nube");
                     }
                 } else {
+                    productData.updatedAt = new Date().getTime();
                     if (id) {
                         const idx = window.inventory.findIndex(p => p.id === id);
                         window.inventory[idx] = { ...window.inventory[idx], ...productData };
                     } else {
                         productData.id = "local_" + Date.now();
+                        productData.createdAt = productData.updatedAt;
                         window.inventory.push(productData);
                     }
                     renderInventory(); updateBalanceCards(); showToast("Guardado localmente (Sin nube)");
                 }
                 closeModal('modal-add-product');
-            } catch (error) { console.error("Error guardando:", error); showToast("Error al guardar", "error"); }
+            } catch (error) { 
+                console.error("Error guardando:", error); 
+                // Mensaje inteligente para reportar el error exacto
+                showToast("Error: " + (error.message || "No se pudo guardar"), "error"); 
+            }
         };
 
         window.renderInventory = function(filterText = '') {
@@ -993,8 +1004,12 @@
 
                 showToast("Venta completada con éxito", "success");
                 window.cart = []; renderCart(); switchView('view-balance');
-            } catch (error) { console.error("Transacción fallida: ", error); showToast("Error en la venta: " + error, "error"); }
-            finally { btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Confirmar Venta'; btn.disabled = false; }
+            } catch (error) { 
+                console.error("Transacción fallida: ", error); 
+                showToast("Error: " + (error.message || error), "error"); 
+            } finally { 
+                btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Confirmar Venta'; btn.disabled = false; 
+            }
         };
 
         function updateBalanceCards() {
