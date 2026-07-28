@@ -28,6 +28,7 @@
             }
         }
     </script>
+    
     <style>
         body {
             background-color: #f3f4f6;
@@ -79,7 +80,7 @@
                 if (fbResult !== 'timeout' && typeof window.verifyPasswordWithFirebase === 'function') {
                     isValid = await window.verifyPasswordWithFirebase(pass);
                 } else {
-                    // Fallback si no hay internet o tarda mucho
+                    // Fallback local por si el internet falla
                     const validPass = localStorage.getItem('app_password') || 'hrepuestos';
                     isValid = (pass === validPass);
                 }
@@ -382,7 +383,7 @@
         </div>
     </div>
 
-    <!-- Modal Nuevo Producto -->
+    <!-- Modal Nuevo/Editar Producto -->
     <div id="modal-add-product" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-full overflow-y-auto">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
@@ -464,9 +465,9 @@
                     <input type="hidden" id="prod-img-url" value="">
                 </div>
 
-                <!-- Botones Modificados (Ahora incluye Eliminar) -->
+                <!-- Botones Modificados (Ahora llama a confirmDeleteProduct) -->
                 <div class="pt-4 flex space-x-2">
-                    <button type="button" id="btn-delete-product" onclick="deleteProduct()" class="hidden flex-none w-12 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg shadow transition-colors flex items-center justify-center" title="Eliminar Producto">
+                    <button type="button" id="btn-delete-product" onclick="confirmDeleteProduct()" class="hidden flex-none w-12 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg shadow transition-colors flex items-center justify-center" title="Eliminar Producto">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                     <button type="button" onclick="closeModal('modal-add-product')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg">
@@ -477,6 +478,27 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Eliminación (NUEVO BARRERA DE SEGURIDAD) -->
+    <div id="modal-confirm-delete" class="fixed inset-0 z-[60] hidden bg-black bg-opacity-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 rounded-full bg-red-100 mx-auto flex items-center justify-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-3xl text-red-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Eliminar Repuesto</h3>
+                <p class="text-gray-600 text-sm mb-6" id="confirm-delete-text">¿Estás seguro que deseas eliminar este producto?</p>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal('modal-confirm-delete')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="button" id="btn-confirm-delete" onclick="executeDeleteProduct()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors">
+                        Sí, eliminar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -600,7 +622,6 @@
                 try {
                     window.inventory = [];
                     snapshot.forEach((doc) => { window.inventory.push({ id: doc.id, ...doc.data() }); });
-                    // Solución: Evitamos que intente ordenar productos que no tienen nombre (lo cual daba error)
                     window.inventory.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                     renderInventory(); updateBalanceCards();
                 } catch(e) {
@@ -658,7 +679,7 @@
 
                 if (productId) {
                     document.getElementById('modal-title').innerText = 'Editar Repuesto';
-                    document.getElementById('btn-delete-product').classList.remove('hidden'); // Muestra el tacho
+                    document.getElementById('btn-delete-product').classList.remove('hidden'); 
                     const prod = window.inventory.find(p => p.id === productId);
                     if(prod) {
                         document.getElementById('prod-id').value = prod.id;
@@ -677,7 +698,7 @@
                 } else {
                     document.getElementById('modal-title').innerText = 'Nuevo Repuesto';
                     document.getElementById('prod-id').value = '';
-                    document.getElementById('btn-delete-product').classList.add('hidden'); // Oculta el tacho
+                    document.getElementById('btn-delete-product').classList.add('hidden'); 
                 }
             }
         };
@@ -705,7 +726,6 @@
             renderInventory(); 
         };
 
-        // Compresor para hacer la imagen minúscula
         async function compressToBase64(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -745,8 +765,7 @@
             statusText.innerText = "Optimizando foto..."; statusText.className = "text-xs text-hudson-blue mt-2 text-center font-semibold";
 
             try {
-                // Compresión muy agresiva para evitar límites de Firestore
-                const base64String = await compressToBase64(file, 300, 300, 0.5);
+                const base64String = await compressToBase64(file, 250, 250, 0.4);
                 
                 document.getElementById('image-preview').src = base64String;
                 document.getElementById('image-preview').classList.remove('hidden');
@@ -798,16 +817,28 @@
                 }
                 closeModal('modal-add-product');
             } catch (error) { 
-                showToast("Error exacto: " + (error.message || "Falla de red"), "error"); 
+                showToast("Falla de red o permisos", "error"); 
             }
         };
 
-        window.deleteProduct = async function() {
+        // ¡Nueva barrera de seguridad antes de borrar!
+        window.confirmDeleteProduct = function() {
+            const id = document.getElementById('prod-id').value;
+            if (!id) return;
+            const prod = window.inventory.find(p => p.id === id);
+            if(!prod) return;
+            
+            document.getElementById('confirm-delete-text').innerHTML = `¿Estás seguro que deseas eliminar <strong>${prod.name || 'este repuesto'}</strong>?`;
+            document.getElementById('modal-confirm-delete').classList.remove('hidden');
+        };
+
+        window.executeDeleteProduct = async function() {
             const id = document.getElementById('prod-id').value;
             if (!id) return;
             
-            const btn = document.getElementById('btn-delete-product');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const btn = document.getElementById('btn-confirm-delete');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Eliminando...';
+            btn.disabled = true; // Evita que el usuario toque dos veces
             
             try {
                 if (db && auth.currentUser) {
@@ -817,11 +848,13 @@
                     renderInventory(); updateBalanceCards();
                 }
                 showToast("Producto eliminado", "success");
+                closeModal('modal-confirm-delete');
                 closeModal('modal-add-product');
             } catch(e) {
                 showToast("Error al eliminar", "error");
             } finally {
-                btn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                btn.innerHTML = 'Sí, eliminar';
+                btn.disabled = false;
             }
         };
 
@@ -834,7 +867,6 @@
                 
                 const alertsEnabled = localStorage.getItem('stock_alerts') !== 'false';
                 
-                // Asegurarse de que no de error si los productos están "rotos" en la BD
                 const outOfStockItems = window.inventory.filter(p => (Number(p.qty) || 0) <= 0);
                 
                 if (alertsEnabled && outOfStockItems.length > 0) {
@@ -859,11 +891,10 @@
                     li.className = 'p-4 hover:bg-gray-50 flex flex-col sm:flex-row items-center sm:items-start transition duration-150';
                     const imgSrc = prod.img ? prod.img : 'https://placehold.co/100x100/e2e8f0/475569?text=Repuesto';
                     
-                    // Variables 100% seguras contra errores de base de datos
                     const qty = Number(prod.qty) || 0;
                     const cost = Number(prod.cost) || 0;
                     const price = Number(prod.price) || 0;
-                    const name = prod.name || 'Producto Incompleto/Error';
+                    const name = prod.name || 'Producto Incompleto';
                     const code = prod.code || 'S/C';
 
                     let stockClass = qty <= 0 ? 'bg-red-100 text-red-800' : (qty <= 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
