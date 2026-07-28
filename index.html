@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hudson Repuestos - Sistema de Gestión</title>
     
-    <!-- Tailwind CSS para el diseño -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome para iconos -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -52,7 +52,7 @@
         }
     </style>
 
-    <!-- SCRIPT DE LOGIN AISLADO -->
+    <!-- SCRIPT DE LOGIN INSTANTÁNEO -->
     <script>
         let resolveFirebase;
         window.firebaseLoadedPromise = new Promise(resolve => { resolveFirebase = resolve; });
@@ -103,7 +103,7 @@
 </head>
 <body class="text-gray-800 antialiased font-sans flex flex-col h-screen">
 
-    <!-- Pantalla de Login -->
+    <!-- PANTALLA DE LOGIN -->
     <div id="login-screen" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-4 transition-opacity duration-300">
         <div class="max-w-sm w-full text-center">
             <img src="hr.png" alt="hudsonrepuestos" onerror="this.src='https://placehold.co/200x200/0a198f/ffffff?text=HR'" class="w-48 h-48 mx-auto mb-8 rounded-full object-contain shadow-sm border border-gray-100 bg-white">
@@ -120,14 +120,16 @@
         </div>
     </div>
 
-    <!-- Cabecera Superior -->
+    <!-- CABECERA SUPERIOR -->
     <header class="bg-hudson-blue text-white shadow-md fixed top-0 w-full z-10 h-16 relative flex items-center justify-between px-4">
+        <!-- Marca de Agua / Portafolio a la izquierda -->
         <a href="https://psmsaas.github.io/psm/" target="_blank" rel="noopener noreferrer" class="z-20 flex items-center shrink-0">
             <div class="w-10 h-10 rounded-full border-2 border-black bg-white overflow-hidden shadow-sm hover:scale-105 transition-transform duration-300">
                 <img src="psm.png" alt="PSM" onerror="this.src='https://placehold.co/100x100/ffffff/000000?text=Dev'" class="w-full h-full object-contain p-[2px]">
             </div>
         </a>
 
+        <!-- Logo y Título CENTRADOS absolutamente -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <div class="flex items-center space-x-2 pointer-events-auto">
                 <img src="hr.png" alt="hudsonrepuestos" onerror="this.src='https://placehold.co/100x100/0a198f/ffffff?text=HR'" class="w-10 h-10 rounded-full bg-white object-cover border border-hudson-light shadow-inner shrink-0">
@@ -138,12 +140,13 @@
             </div>
         </div>
 
+        <!-- Nube a la derecha -->
         <div id="connection-status" class="z-20 shrink-0 w-8 flex items-center justify-end">
             <i class="fas fa-cloud text-gray-400 text-xl" title="Conectando..."></i>
         </div>
     </header>
 
-    <!-- Contenedor Principal (Main) -->
+    <!-- CONTENEDOR PRINCIPAL -->
     <main class="flex-grow pt-16 pb-16 overflow-y-auto w-full container mx-auto md:max-w-4xl" id="main-content">
         
         <!-- VISTA: INVENTARIO -->
@@ -156,7 +159,7 @@
             </div>
 
             <!-- Banner Alerta Stock -->
-            <div id="stock-alert-banner" class="hidden mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-sm" role="alert">
+            <div id="stock-alert-banner" class="hidden mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-sm">
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-triangle mr-3 text-2xl"></i>
                     <div>
@@ -170,7 +173,7 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fas fa-search text-gray-400"></i>
                 </div>
-                <input type="text" id="search-inventory" class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm" placeholder="Buscar por código o nombre..." onkeyup="filterInventory()">
+                <input type="text" id="search-inventory" class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hudson-blue" placeholder="Buscar por código o nombre..." onkeyup="filterInventory()">
             </div>
 
             <div class="bg-white rounded-xl shadow overflow-hidden">
@@ -191,7 +194,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-barcode text-gray-400"></i>
                         </div>
-                        <input type="text" id="sale-search" class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hudson-blue" placeholder="Código o Nombre del Repuesto..." oninput="searchForSale(this.value)" autocomplete="off">
+                        <input type="text" id="sale-search" class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hudson-blue" placeholder="Código o Nombre del Repuesto..." oninput="searchForSale(this.value)" autocomplete="off">
                         <ul id="sale-search-results" class="absolute z-30 w-full bg-white mt-1 border border-gray-200 rounded-md shadow-lg hidden max-h-60 overflow-y-auto no-scrollbar"></ul>
                     </div>
                 </div>
@@ -200,8 +203,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">O agregar un Servicio/Otro</label>
                     <div class="flex flex-col space-y-3">
                         <div class="flex space-x-2">
-                            <input type="text" id="custom-service-desc" placeholder="Ej. Mano de obra frenos" class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hudson-blue text-sm">
-                            <input type="number" id="custom-service-price" placeholder="$ Precio" class="w-28 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hudson-blue text-sm">
+                            <input type="text" id="custom-service-desc" placeholder="Ej. Mano de obra frenos" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-hudson-blue text-sm">
+                            <input type="number" id="custom-service-price" placeholder="$ Precio" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-hudson-blue text-sm">
                         </div>
                         <button type="button" onclick="addCustomServiceToCart()" class="w-full bg-gray-100 hover:bg-gray-200 text-hudson-blue font-bold py-3 px-4 rounded-lg transition-colors border border-gray-200 flex justify-center items-center">
                             <i class="fas fa-plus mr-2"></i> Agregar al carrito
@@ -296,11 +299,11 @@
                 <form onsubmit="changePassword(event)" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña Actual</label>
-                        <input type="password" id="setting-old-pass" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm">
+                        <input type="password" id="setting-old-pass" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue sm:text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
-                        <input type="password" id="setting-new-pass" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm">
+                        <input type="password" id="setting-new-pass" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue sm:text-sm">
                     </div>
                     <button type="submit" id="btn-change-pass" class="w-full bg-hudson-blue hover:bg-hudson-dark text-white font-bold py-2 px-4 rounded-lg shadow transition-colors">
                         Actualizar Contraseña Global
@@ -317,36 +320,32 @@
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="setting-stock-alerts" class="sr-only peer" onchange="toggleStockAlerts(this)">
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-hudson-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hudson-blue"></div>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hudson-blue"></div>
                     </label>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Navegación Mobile -->
+    <!-- NAVEGACIÓN MOBILE -->
     <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full pb-safe z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden">
         <div class="flex justify-around items-center h-16 max-w-md mx-auto">
             <button onclick="switchView('view-inventory', this)" class="nav-btn w-full h-full flex flex-col items-center justify-center text-hudson-blue font-semibold transition-colors">
-                <i class="fas fa-boxes text-xl mb-1"></i>
-                <span class="text-xs">Inventario</span>
+                <i class="fas fa-boxes text-xl mb-1"></i><span class="text-xs">Inventario</span>
             </button>
             <button onclick="switchView('view-sales', this)" class="nav-btn w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-hudson-blue transition-colors">
-                <i class="fas fa-cash-register text-xl mb-1"></i>
-                <span class="text-xs">Ventas</span>
+                <i class="fas fa-cash-register text-xl mb-1"></i><span class="text-xs">Ventas</span>
             </button>
             <button onclick="switchView('view-balance', this)" class="nav-btn w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-hudson-blue transition-colors">
-                <i class="fas fa-chart-line text-xl mb-1"></i>
-                <span class="text-xs">Balance</span>
+                <i class="fas fa-chart-line text-xl mb-1"></i><span class="text-xs">Balance</span>
             </button>
             <button onclick="switchView('view-settings', this)" class="nav-btn w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-hudson-blue transition-colors">
-                <i class="fas fa-cog text-xl mb-1"></i>
-                <span class="text-xs">Ajustes</span>
+                <i class="fas fa-cog text-xl mb-1"></i><span class="text-xs">Ajustes</span>
             </button>
         </div>
     </nav>
     
-    <!-- Navegación Escritorio -->
+    <!-- NAVEGACIÓN ESCRITORIO -->
     <div class="hidden md:flex flex-col fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 shadow-sm z-0">
         <div class="p-4 space-y-2 mt-4 flex-grow">
             <button onclick="switchView('view-inventory', this)" class="nav-btn-desktop w-full text-left px-4 py-3 rounded-lg flex items-center bg-blue-50 text-hudson-blue font-semibold transition-colors">
@@ -364,7 +363,7 @@
         </div>
     </div>
 
-    <!-- Modal Nuevo/Editar Producto -->
+    <!-- MODAL NUEVO/EDITAR PRODUCTO -->
     <div id="modal-add-product" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-full overflow-y-auto">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
@@ -383,13 +382,13 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-barcode text-gray-400"></i>
                         </div>
-                        <input type="text" id="prod-code" required class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm uppercase" placeholder="Ej. FIL-ACE-001">
+                        <input type="text" id="prod-code" required class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue sm:text-sm uppercase" placeholder="Ej. FIL-ACE-001">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Descripción del Producto *</label>
-                    <input type="text" id="prod-name" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm" placeholder="Filtro de Aceite Vw Gol">
+                    <input type="text" id="prod-name" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue sm:text-sm" placeholder="Filtro de Aceite Vw Gol">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -399,7 +398,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">$</span>
                             </div>
-                            <input type="number" id="prod-cost" required min="0" step="0.01" class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm" placeholder="0.00">
+                            <input type="number" id="prod-cost" required min="0" step="0.01" class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue sm:text-sm" placeholder="0.00">
                         </div>
                     </div>
                     <div>
@@ -408,7 +407,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">$</span>
                             </div>
-                            <input type="number" id="prod-price" required min="0" step="0.01" class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm" placeholder="0.00">
+                            <input type="number" id="prod-price" required min="0" step="0.01" class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue sm:text-sm" placeholder="0.00">
                         </div>
                     </div>
                 </div>
@@ -419,7 +418,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-cubes text-gray-400"></i>
                         </div>
-                        <input type="number" id="prod-qty" required min="0" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm" placeholder="Cantidad en stock">
+                        <input type="number" id="prod-qty" required min="0" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue sm:text-sm" placeholder="Cantidad en stock">
                     </div>
                 </div>
 
@@ -427,26 +426,23 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Imagen del Repuesto (Opcional)</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 relative overflow-hidden group">
                         <img id="image-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-0 opacity-50 group-hover:opacity-30 transition-opacity" alt="Preview">
-                        
                         <div class="space-y-1 text-center relative z-10">
                             <i id="image-placeholder-icon" class="fas fa-camera text-gray-400 text-3xl mb-2"></i>
                             <div class="flex text-sm text-gray-600 justify-center">
-                                <label for="prod-img-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-hudson-blue hover:text-hudson-light focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-hudson-blue px-2 py-1 shadow-sm border border-gray-200">
+                                <label for="prod-img-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-hudson-blue hover:text-hudson-light px-2 py-1 shadow-sm border border-gray-200">
                                     <span>Tomar foto o subir</span>
                                     <input id="prod-img-upload" type="file" accept="image/*" capture="environment" class="sr-only" onchange="handleImageUpload(event)">
                                 </label>
                             </div>
                             <p id="upload-status-text" class="text-xs text-gray-400 mt-2">Carga local instantánea</p>
-                            <div id="image-upload-spinner" class="hidden mt-2">
-                                <i class="fas fa-spinner fa-spin text-hudson-blue text-xl"></i>
-                            </div>
+                            <div id="image-upload-spinner" class="hidden mt-2"><i class="fas fa-spinner fa-spin text-hudson-blue text-xl"></i></div>
                         </div>
                     </div>
                     <input type="hidden" id="prod-img-url" value="">
                 </div>
 
                 <div class="pt-4 flex space-x-2">
-                    <button type="button" id="btn-delete-product" onclick="confirmDeleteProduct()" class="hidden flex-none w-12 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg shadow transition-colors flex items-center justify-center" title="Eliminar Producto">
+                    <button type="button" id="btn-delete-product" onclick="confirmDeleteProduct()" class="hidden flex-none w-12 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg shadow transition-colors flex items-center justify-center">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                     <button type="button" onclick="closeModal('modal-add-product')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg">
@@ -460,8 +456,8 @@
         </div>
     </div>
 
-    <!-- Modal Confirmar Eliminación -->
-    <div id="modal-confirm-delete" class="fixed inset-0 z-[60] hidden bg-black bg-opacity-50 flex items-center justify-center p-4 transition-opacity">
+    <!-- MODAL CONFIRMAR ELIMINACIÓN -->
+    <div id="modal-confirm-delete" class="fixed inset-0 z-[60] hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div class="p-6 text-center">
                 <div class="w-16 h-16 rounded-full bg-red-100 mx-auto flex items-center justify-center mb-4">
@@ -470,10 +466,10 @@
                 <h3 class="text-xl font-bold text-gray-800 mb-2">Eliminar Repuesto</h3>
                 <p class="text-gray-600 text-sm mb-6" id="confirm-delete-text">¿Estás seguro que deseas eliminar este producto?</p>
                 <div class="flex space-x-3">
-                    <button type="button" onclick="closeModal('modal-confirm-delete')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <button type="button" onclick="closeModal('modal-confirm-delete')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg">
                         Cancelar
                     </button>
-                    <button type="button" id="btn-confirm-delete" onclick="executeDeleteProduct()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors">
+                    <button type="button" id="btn-confirm-delete" onclick="executeDeleteProduct()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow">
                         Sí, eliminar
                     </button>
                 </div>
@@ -481,15 +477,12 @@
         </div>
     </div>
 
-    <div id="toast-container" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 md:bottom-10 md:left-auto md:right-10 md:transform-none z-50 flex flex-col gap-2"></div>
+    <div id="toast-container" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 md:bottom-10 md:left-auto md:right-10 md:transform-none z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, collection, doc, setDoc, updateDoc, deleteDoc,
-            onSnapshot, runTransaction, serverTimestamp, getDoc
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, runTransaction, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.inventory = [];
         window.salesHistory = [];
@@ -506,9 +499,8 @@
         };
         // 👆👆👆 HASTA AQUÍ 👆👆👆
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hudson-repuestos-v1';
-        let firebaseConfigToUse = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
-
+        const appId = 'hudson-repuestos-v1';
+        let firebaseConfigToUse = firebaseConfig;
         let auth, db, userId;
 
         function getCollectionRef(colName) { return collection(db, 'artifacts', appId, 'public', 'data', colName); }
@@ -516,21 +508,15 @@
 
         async function initFirebase() {
             try {
-                if (firebaseConfigToUse.apiKey === "TU_API_KEY" && typeof __firebase_config === 'undefined') {
-                    throw new Error("Modo local de prueba");
-                }
+                if (firebaseConfigToUse.apiKey === "TU_API_KEY") throw new Error("Modo local");
                 const app = initializeApp(firebaseConfigToUse);
                 auth = getAuth(app);
                 db = getFirestore(app);
-
-                if (typeof __initial_auth_token !== 'undefined') await signInWithCustomToken(auth, __initial_auth_token);
-                else await signInAnonymously(auth); 
-                
+                await signInAnonymously(auth); 
                 userId = auth.currentUser.uid;
                 document.getElementById('connection-status').innerHTML = `<i class="fas fa-cloud text-green-400 text-xl" title="Sincronizado"></i>`;
                 return true;
             } catch (error) {
-                console.warn(error.message);
                 document.getElementById('connection-status').innerHTML = `<i class="fas fa-cloud text-red-500 text-xl" title="Sin conexión"></i>`;
                 renderInventory(); updateBalanceCards(); renderSalesHistory();
                 return false;
@@ -543,32 +529,42 @@
                     let validPass = 'hrepuestos';
                     if (db) {
                         try {
-                            const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
-                            const configSnap = await getDoc(configRef);
+                            const configSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig'));
                             if (configSnap.exists() && configSnap.data().app_password) validPass = configSnap.data().app_password;
-                            else await setDoc(configRef, { app_password: 'hrepuestos' }, { merge: true });
-                            localStorage.setItem('app_password', validPass); 
-                        } catch(e) { validPass = localStorage.getItem('app_password') || 'hrepuestos'; }
-                    } else {
-                        validPass = localStorage.getItem('app_password') || 'hrepuestos';
+                        } catch(e) {}
                     }
                     return inputPassword === validPass;
                 });
             }
-
             if (isConnected) { subscribeToInventory(); subscribeToSales(); }
             switchView('view-inventory');
             const checkbox = document.getElementById('setting-stock-alerts');
             if(checkbox) checkbox.checked = localStorage.getItem('stock_alerts') !== 'false';
         });
 
+        // TOASTS
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
+            const icons = { success: 'fa-check', error: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            toast.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 toast-enter max-w-xs w-full font-medium text-sm pointer-events-auto`;
+            toast.innerHTML = `<i class="fas ${icons[type]}"></i><span class="flex-grow">${message}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
+            setTimeout(() => {
+                toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active');
+                setTimeout(() => { if(toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+            }, 4000);
+        };
+
+        // AJUSTES
         window.changePassword = async function(e) {
             e.preventDefault();
             const oldPass = document.getElementById('setting-old-pass').value;
             const newPass = document.getElementById('setting-new-pass').value;
             const btn = document.getElementById('btn-change-pass');
             const originalBtnText = btn.innerHTML;
-            
             btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Validando...';
             
             let validPass = 'hrepuestos';
@@ -577,16 +573,12 @@
                     const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
                     const configSnap = await getDoc(configRef);
                     if (configSnap.exists() && configSnap.data().app_password) validPass = configSnap.data().app_password;
-                } else { validPass = localStorage.getItem('app_password') || 'hrepuestos'; }
-                
+                }
                 if (oldPass !== validPass) { showToast('Contraseña actual incorrecta', 'error'); btn.disabled = false; btn.innerHTML = originalBtnText; return; }
                 if (newPass.length < 4) { showToast('Mínimo 4 caracteres', 'error'); btn.disabled = false; btn.innerHTML = originalBtnText; return; }
                 
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
-                if (db) {
-                    const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig');
-                    await setDoc(configRef, { app_password: newPass }, { merge: true });
-                }
+                if (db) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'globalConfig'), { app_password: newPass }, { merge: true });
                 localStorage.setItem('app_password', newPass); 
                 showToast('Contraseña actualizada con éxito', 'success');
                 document.getElementById('setting-old-pass').value = ''; document.getElementById('setting-new-pass').value = '';
@@ -594,17 +586,20 @@
             finally { btn.disabled = false; btn.innerHTML = originalBtnText; }
         };
 
+        window.toggleStockAlerts = function(checkbox) {
+            localStorage.setItem('stock_alerts', checkbox.checked ? 'true' : 'false');
+            showToast(checkbox.checked ? 'Alertas activadas' : 'Alertas desactivadas', 'info');
+            renderInventory(); 
+        };
+
+        // SUSCRIPCIONES A FIREBASE
         function subscribeToInventory() {
             if(!db || !auth.currentUser) return;
             onSnapshot(getCollectionRef('inventory'), (snapshot) => {
-                try {
-                    window.inventory = [];
-                    snapshot.forEach((doc) => { window.inventory.push({ id: doc.id, ...doc.data() }); });
-                    window.inventory.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-                    renderInventory(); updateBalanceCards();
-                } catch(e) {
-                    console.error("Error procesando los datos:", e);
-                }
+                window.inventory = [];
+                snapshot.forEach((doc) => window.inventory.push({ id: doc.id, ...doc.data() }));
+                window.inventory.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                renderInventory(); updateBalanceCards();
             });
         }
 
@@ -622,30 +617,19 @@
             });
         }
 
+        // VISTAS Y MODALES
         window.switchView = function(viewId, btnElement) {
             document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden', 'active-view'));
             const targetView = document.getElementById(viewId);
             targetView.classList.remove('hidden'); targetView.classList.add('active-view');
-
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-hudson-blue', 'font-semibold'); btn.classList.add('text-gray-500');
-            });
-            if(btnElement && btnElement.classList.contains('nav-btn')) {
-                btnElement.classList.add('text-hudson-blue', 'font-semibold'); btnElement.classList.remove('text-gray-500');
-            }
-
-            document.querySelectorAll('.nav-btn-desktop').forEach(btn => {
-                btn.classList.remove('bg-blue-50', 'text-hudson-blue', 'font-semibold'); btn.classList.add('text-gray-600');
-            });
-            if(btnElement && btnElement.classList.contains('nav-btn-desktop')) {
-                btnElement.classList.add('bg-blue-50', 'text-hudson-blue', 'font-semibold'); btnElement.classList.remove('text-gray-600');
-            }
-            if(viewId === 'view-sales') setTimeout(() => document.getElementById('sale-search').focus(), 100);
+            document.querySelectorAll('.nav-btn').forEach(btn => { btn.classList.remove('text-hudson-blue', 'font-semibold'); btn.classList.add('text-gray-500'); });
+            if(btnElement && btnElement.classList.contains('nav-btn')) { btnElement.classList.add('text-hudson-blue', 'font-semibold'); btnElement.classList.remove('text-gray-500'); }
+            document.querySelectorAll('.nav-btn-desktop').forEach(btn => { btn.classList.remove('bg-blue-50', 'text-hudson-blue', 'font-semibold'); btn.classList.add('text-gray-600'); });
+            if(btnElement && btnElement.classList.contains('nav-btn-desktop')) { btnElement.classList.add('bg-blue-50', 'text-hudson-blue', 'font-semibold'); btnElement.classList.remove('text-gray-600'); }
         };
 
         window.openModal = function(modalId, productId = null) {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('hidden');
+            document.getElementById(modalId).classList.remove('hidden');
             if (modalId === 'modal-add-product') {
                 document.getElementById('form-product').reset();
                 document.getElementById('image-preview').classList.add('hidden');
@@ -683,79 +667,45 @@
 
         window.closeModal = function(modalId) { document.getElementById(modalId).classList.add('hidden'); };
 
-        window.showToast = function(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
-            const icons = { success: 'fa-check', error: 'fa-exclamation-triangle', info: 'fa-info-circle' };
-            toast.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 toast-enter max-w-xs w-full font-medium text-sm`;
-            toast.innerHTML = `<i class="fas ${icons[type]}"></i><span class="flex-grow">${message}</span>`;
-            container.appendChild(toast);
-            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
-            setTimeout(() => {
-                toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active');
-                setTimeout(() => { if(toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
-            }, 3000);
-        };
-
-        window.toggleStockAlerts = function(checkbox) {
-            localStorage.setItem('stock_alerts', checkbox.checked ? 'true' : 'false');
-            showToast(checkbox.checked ? 'Alertas activadas' : 'Alertas desactivadas', 'info');
-            renderInventory(); 
-        };
-
+        // PRODUCTOS: FOTO, GUARDAR Y ELIMINAR
         async function compressToBase64(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = event => {
-                    const img = new Image();
-                    img.src = event.target.result;
+                    const img = new Image(); img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        let width = img.width; let height = img.height;
-                        if (width > height) {
-                            if (width > maxWidth) { height = Math.round(height * (maxWidth / width)); width = maxWidth; }
-                        } else {
-                            if (height > maxHeight) { width = Math.round(width * (maxHeight / height)); height = maxHeight; }
-                        }
+                        let width = img.width, height = img.height;
+                        if (width > height) { if (width > maxWidth) { height = Math.round(height * (maxWidth / width)); width = maxWidth; } } 
+                        else { if (height > maxHeight) { width = Math.round(width * (maxHeight / height)); height = maxHeight; } }
                         canvas.width = width; canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
                         resolve(canvas.toDataURL('image/jpeg', quality));
                     };
-                    img.onerror = error => reject(error);
+                    img.onerror = reject;
                 };
-                reader.onerror = error => reject(error);
+                reader.onerror = reject;
             });
         }
 
         window.handleImageUpload = async function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
+            const file = event.target.files[0]; if (!file) return;
             const spinner = document.getElementById('image-upload-spinner');
             const statusText = document.getElementById('upload-status-text');
             const btnGuardar = document.getElementById('btn-save-product');
-            
-            spinner.classList.remove('hidden'); btnGuardar.disabled = true; 
-            btnGuardar.classList.add('opacity-50', 'cursor-wait');
+            spinner.classList.remove('hidden'); btnGuardar.disabled = true; btnGuardar.classList.add('opacity-50');
             statusText.innerText = "Optimizando foto..."; statusText.className = "text-xs text-hudson-blue mt-2 text-center font-semibold";
 
             try {
                 const base64String = await compressToBase64(file, 250, 250, 0.4);
-                
                 document.getElementById('image-preview').src = base64String;
                 document.getElementById('image-preview').classList.remove('hidden');
                 document.getElementById('image-placeholder-icon').classList.add('hidden');
                 document.getElementById('prod-img-url').value = base64String;
-
                 statusText.innerText = "¡Foto lista!"; statusText.className = "text-xs text-green-500 mt-2 text-center font-bold";
-            } catch (error) {
-                statusText.innerText = "Error al procesar la foto."; statusText.className = "text-xs text-red-500 mt-2 text-center";
-            } finally {
-                spinner.classList.add('hidden'); btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-wait');
-            }
+            } catch (error) { statusText.innerText = "Error procesando foto"; statusText.className = "text-xs text-red-500 mt-2 text-center"; } 
+            finally { spinner.classList.add('hidden'); btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50'); }
         };
 
         window.saveProduct = async function(e) {
@@ -783,20 +733,12 @@
                     }
                 } else {
                     productData.updatedAt = new Date().getTime();
-                    if (id) {
-                        const idx = window.inventory.findIndex(p => p.id === id);
-                        window.inventory[idx] = { ...window.inventory[idx], ...productData };
-                    } else {
-                        productData.id = "local_" + Date.now();
-                        productData.createdAt = productData.updatedAt;
-                        window.inventory.push(productData);
-                    }
+                    if (id) { const idx = window.inventory.findIndex(p => p.id === id); window.inventory[idx] = { ...window.inventory[idx], ...productData }; } 
+                    else { productData.id = "local_" + Date.now(); window.inventory.push(productData); }
                     renderInventory(); updateBalanceCards(); showToast("Guardado localmente");
                 }
                 closeModal('modal-add-product');
-            } catch (error) { 
-                showToast("Error al guardar (Permisos o red)", "error"); 
-            }
+            } catch (error) { showToast("Error al guardar: Permisos insuficientes", "error"); }
         };
 
         window.confirmDeleteProduct = function() {
@@ -804,7 +746,6 @@
             if (!id) return;
             const prod = window.inventory.find(p => p.id === id);
             if(!prod) return;
-            
             document.getElementById('confirm-delete-text').innerHTML = `¿Estás seguro que deseas eliminar <strong>${prod.name || 'este repuesto'}</strong>?`;
             document.getElementById('modal-confirm-delete').classList.remove('hidden');
         };
@@ -812,80 +753,49 @@
         window.executeDeleteProduct = async function() {
             const id = document.getElementById('prod-id').value;
             if (!id) return;
-            
             const btn = document.getElementById('btn-confirm-delete');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Eliminando...';
-            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Eliminando...'; btn.disabled = true;
             
             try {
-                if (db && auth.currentUser) {
-                    await deleteDoc(getDocRef('inventory', id));
-                } else {
-                    window.inventory = window.inventory.filter(p => p.id !== id);
-                    renderInventory(); updateBalanceCards();
-                }
+                if (db && auth.currentUser) await deleteDoc(getDocRef('inventory', id));
+                else { window.inventory = window.inventory.filter(p => p.id !== id); renderInventory(); updateBalanceCards(); }
                 showToast("Producto eliminado", "success");
-                closeModal('modal-confirm-delete');
-                closeModal('modal-add-product');
-            } catch(e) {
-                showToast("Error al eliminar", "error");
-            } finally {
-                btn.innerHTML = 'Sí, eliminar';
-                btn.disabled = false;
-            }
+                closeModal('modal-confirm-delete'); closeModal('modal-add-product');
+            } catch(e) { showToast("Error al eliminar", "error"); } 
+            finally { btn.innerHTML = 'Sí, eliminar'; btn.disabled = false; }
         };
 
+        // RENDER DE VISTAS 
         window.renderInventory = function(filterText = '') {
-            try {
-                const list = document.getElementById('inventory-list');
-                const alertBanner = document.getElementById('stock-alert-banner');
-                
-                // 1. Limpiamos la lista 100% de forma segura
-                list.innerHTML = '';
-                
-                const alertsEnabled = localStorage.getItem('stock_alerts') !== 'false';
-                const outOfStockItems = window.inventory.filter(p => (Number(p.qty) || 0) <= 0);
-                
-                if (alertsEnabled && outOfStockItems.length > 0) {
-                    alertBanner.classList.remove('hidden');
-                    const names = outOfStockItems.slice(0, 3).map(i => i.name || 'Sin nombre').join(', ');
-                    const extra = outOfStockItems.length > 3 ? ` y ${outOfStockItems.length - 3} más` : '';
-                    document.getElementById('stock-alert-text').innerText = `${names}${extra} están sin stock.`;
-                } else {
-                    alertBanner.classList.add('hidden');
-                }
+            const list = document.getElementById('inventory-list');
+            const alertBanner = document.getElementById('stock-alert-banner');
+            const alertsEnabled = localStorage.getItem('stock_alerts') !== 'false';
+            
+            const outOfStockItems = window.inventory.filter(p => (Number(p.qty) || 0) <= 0);
+            if (alertsEnabled && outOfStockItems.length > 0) {
+                alertBanner.classList.remove('hidden');
+                const names = outOfStockItems.slice(0, 3).map(i => i.name || 'S/N').join(', ');
+                const extra = outOfStockItems.length > 3 ? ` y ${outOfStockItems.length - 3} más` : '';
+                document.getElementById('stock-alert-text').innerText = `${names}${extra} están sin stock.`;
+            } else { alertBanner.classList.add('hidden'); }
 
-                const filtered = window.inventory.filter(p => 
-                    (p.name || '').toLowerCase().includes(filterText.toLowerCase()) || 
-                    (p.code || '').toLowerCase().includes(filterText.toLowerCase())
-                );
+            const filtered = window.inventory.filter(p => (p.name || '').toLowerCase().includes(filterText.toLowerCase()) || (p.code || '').toLowerCase().includes(filterText.toLowerCase()));
+            
+            // CONSTRUCCION DIRECTA EN STRING (A PRUEBA DE FALLOS)
+            if (filtered.length === 0) { 
+                list.innerHTML = `<li class="p-6 text-center text-gray-500 py-10"><i class="fas fa-box-open text-4xl mb-3 text-gray-300"></i><p>No hay productos en el inventario.</p><p class="text-sm">Agrega uno nuevo para comenzar.</p></li>`;
+                return; 
+            }
+
+            let html = '';
+            filtered.forEach(prod => {
+                const imgSrc = prod.img ? prod.img : 'https://placehold.co/100x100/e2e8f0/475569?text=Repuesto';
+                const qty = Number(prod.qty) || 0; const cost = Number(prod.cost) || 0; const price = Number(prod.price) || 0;
+                const name = prod.name || 'Sin nombre'; const code = prod.code || 'S/C';
+                const stockClass = qty <= 0 ? 'bg-red-100 text-red-800' : (qty <= 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
                 
-                // 2. Si no hay productos, CREAMOS el cartel de cero (Aquí estaba el bug antes)
-                if (filtered.length === 0) { 
-                    list.innerHTML = `
-                        <li class="p-6 text-center text-gray-500 py-10">
-                            <i class="fas fa-box-open text-4xl mb-3 text-gray-300"></i>
-                            <p>No hay productos en el inventario.</p>
-                            <p class="text-sm">Agrega uno nuevo para comenzar.</p>
-                        </li>
-                    `;
-                    return; 
-                }
-
-                filtered.forEach(prod => {
-                    const li = document.createElement('li');
-                    li.className = 'p-4 hover:bg-gray-50 flex flex-col sm:flex-row items-center sm:items-start transition duration-150 border-b border-gray-100';
-                    const imgSrc = prod.img ? prod.img : 'https://placehold.co/100x100/e2e8f0/475569?text=Repuesto';
-                    
-                    const qty = Number(prod.qty) || 0;
-                    const cost = Number(prod.cost) || 0;
-                    const price = Number(prod.price) || 0;
-                    const name = prod.name || 'Producto Incompleto';
-                    const code = prod.code || 'S/C';
-
-                    let stockClass = qty <= 0 ? 'bg-red-100 text-red-800' : (qty <= 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
-
-                    li.innerHTML = `
+                html += `
+                    <li class="p-4 hover:bg-gray-50 flex flex-col sm:flex-row items-center sm:items-start transition duration-150 border-b border-gray-100">
                         <div class="flex-shrink-0 mb-3 sm:mb-0 sm:mr-4 relative">
                             <img class="h-20 w-20 rounded-lg object-cover border border-gray-200" src="${imgSrc}" onerror="this.src='https://placehold.co/100x100/e2e8f0/475569?text=Foto'">
                             <span class="absolute -top-2 -right-2 ${stockClass} text-xs font-bold px-2 py-1 rounded-full shadow-sm">Stock: ${qty}</span>
@@ -908,34 +818,40 @@
                                 </div>
                             </div>
                         </div>
-                    `;
-                    list.appendChild(li);
-                });
-            } catch (err) { console.error("Error mostrando lista:", err); }
+                    </li>`;
+            });
+            list.innerHTML = html;
         };
 
         window.filterInventory = function() { renderInventory(document.getElementById('search-inventory').value); };
 
+        // SISTEMA DE VENTAS Y CARRITO
         window.searchForSale = function(query) {
             const resultsContainer = document.getElementById('sale-search-results');
-            resultsContainer.innerHTML = '';
             if (query.length < 2) { resultsContainer.classList.add('hidden'); return; }
             const results = window.inventory.filter(p => ((p.name || '').toLowerCase().includes(query.toLowerCase()) || (p.code || '').toLowerCase().includes(query.toLowerCase())) && (Number(p.qty)||0) > 0).slice(0, 5);
             
+            let html = '';
             if (results.length > 0) {
                 resultsContainer.classList.remove('hidden');
                 results.forEach(prod => {
-                    const li = document.createElement('li');
-                    li.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 flex justify-between items-center';
-                    li.onclick = () => { addToCart(prod, 1); document.getElementById('sale-search').value = ''; resultsContainer.classList.add('hidden'); };
                     const pName = prod.name || 'Sin nombre'; const pCode = prod.code || ''; const pQty = Number(prod.qty) || 0; const pPrice = Number(prod.price) || 0;
-                    li.innerHTML = `<div><p class="text-sm font-semibold text-gray-800">${pName}</p><p class="text-xs text-gray-500">${pCode} | Stock: ${pQty}</p></div><span class="font-bold text-hudson-blue">$${pPrice.toLocaleString()}</span>`;
-                    resultsContainer.appendChild(li);
+                    html += `
+                    <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 flex justify-between items-center" onclick="window.processSearchResult('${prod.id}')">
+                        <div><p class="text-sm font-semibold text-gray-800">${pName}</p><p class="text-xs text-gray-500">${pCode} | Stock: ${pQty}</p></div>
+                        <span class="font-bold text-hudson-blue">$${pPrice.toLocaleString('es-AR')}</span>
+                    </li>`;
                 });
             } else {
                 resultsContainer.classList.remove('hidden');
-                resultsContainer.innerHTML = '<li class="px-4 py-3 text-sm text-gray-500">No se encontraron productos con stock.</li>';
+                html = '<li class="px-4 py-3 text-sm text-gray-500">No se encontraron productos con stock.</li>';
             }
+            resultsContainer.innerHTML = html;
+        };
+        
+        window.processSearchResult = function(prodId) {
+            const prod = window.inventory.find(p => p.id === prodId);
+            if(prod) { addToCart(prod, 1); document.getElementById('sale-search').value = ''; document.getElementById('sale-search-results').classList.add('hidden'); }
         };
 
         document.addEventListener('click', (e) => { if (!document.getElementById('sale-search').contains(e.target)) document.getElementById('sale-search-results').classList.add('hidden'); });
@@ -960,9 +876,7 @@
             if (existing) {
                 if (existing.qty + quantity > maxQty) return showToast("No hay suficiente stock", "error");
                 existing.qty += quantity;
-            } else {
-                window.cart.push({ id: product.id, name: product.name || 'Sin nombre', price: Number(product.price) || 0, cost: Number(product.cost) || 0, qty: quantity, maxQty: maxQty, isService: false });
-            }
+            } else { window.cart.push({ id: product.id, name: product.name || 'Sin nombre', price: Number(product.price) || 0, cost: Number(product.cost) || 0, qty: quantity, maxQty: maxQty, isService: false }); }
             renderCart();
         }
 
@@ -972,28 +886,20 @@
                 const newQty = item.qty + delta;
                 if (newQty > item.maxQty) return showToast("Stock máximo alcanzado", "error");
                 if (newQty <= 0) window.cart.splice(index, 1); else item.qty = newQty;
-            } else {
-                 if (item.qty + delta <= 0) window.cart.splice(index, 1); else item.qty += delta;
-            }
+            } else { if (item.qty + delta <= 0) window.cart.splice(index, 1); else item.qty += delta; }
             renderCart();
         };
 
         window.removeFromCart = function(index) { window.cart.splice(index, 1); renderCart(); };
 
-        function renderCart() {
+        window.renderCart = function() {
             const list = document.getElementById('cart-list');
             const btnProcess = document.getElementById('btn-process-sale');
             let total = 0; 
             
-            // 3. También lo arreglamos aquí para el carrito
-            list.innerHTML = '';
-
+            // CONSTRUCCION DIRECTA EN STRING (A PRUEBA DE FALLOS PARA EL CARRITO)
             if (window.cart.length === 0) {
-                list.innerHTML = `
-                    <li class="p-4 text-center text-gray-400 italic">
-                        El carrito está vacío
-                    </li>
-                `;
+                list.innerHTML = `<li class="p-4 text-center text-gray-400 italic">El carrito está vacío</li>`;
                 document.getElementById('cart-total').innerText = '$0.00';
                 btnProcess.disabled = true; btnProcess.classList.add('opacity-50', 'cursor-not-allowed');
                 return;
@@ -1001,27 +907,28 @@
 
             btnProcess.disabled = false; btnProcess.classList.remove('opacity-50', 'cursor-not-allowed');
 
+            let html = '';
             window.cart.forEach((item, index) => {
                 const itemTotal = item.price * item.qty; total += itemTotal;
-                const li = document.createElement('li'); li.className = 'p-3 flex justify-between items-center bg-white border-b border-gray-100';
                 let typeBadge = item.isService ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold uppercase ml-2">Servicio</span>' : '';
-                li.innerHTML = `
-                    <div class="flex-1 pr-2">
-                        <p class="text-sm font-semibold text-gray-800 break-words">${item.name} ${typeBadge}</p>
-                        <p class="text-xs text-gray-500">$${item.price.toLocaleString()} c/u</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <div class="flex items-center border border-gray-300 rounded-md bg-white">
-                            <button onclick="updateCartItemQty(${index}, -1)" class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-l-md"><i class="fas fa-minus text-xs"></i></button>
-                            <span class="px-2 py-1 text-sm font-semibold min-w-[24px] text-center">${item.qty}</span>
-                            <button onclick="updateCartItemQty(${index}, 1)" class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-r-md"><i class="fas fa-plus text-xs"></i></button>
+                html += `
+                    <li class="p-3 flex justify-between items-center bg-white border-b border-gray-100">
+                        <div class="flex-1 pr-2">
+                            <p class="text-sm font-semibold text-gray-800 break-words">${item.name} ${typeBadge}</p>
+                            <p class="text-xs text-gray-500">$${item.price.toLocaleString('es-AR')} c/u</p>
                         </div>
-                        <div class="text-right min-w-[70px]"><p class="font-bold text-hudson-blue">$${itemTotal.toLocaleString()}</p></div>
-                        <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                `;
-                list.appendChild(li);
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center border border-gray-300 rounded-md bg-white">
+                                <button onclick="updateCartItemQty(${index}, -1)" class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-l-md"><i class="fas fa-minus text-xs"></i></button>
+                                <span class="px-2 py-1 text-sm font-semibold min-w-[24px] text-center">${item.qty}</span>
+                                <button onclick="updateCartItemQty(${index}, 1)" class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-r-md"><i class="fas fa-plus text-xs"></i></button>
+                            </div>
+                            <div class="text-right min-w-[70px]"><p class="font-bold text-hudson-blue">$${itemTotal.toLocaleString('es-AR')}</p></div>
+                            <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </li>`;
             });
+            list.innerHTML = html;
             document.getElementById('cart-total').innerText = '$' + total.toLocaleString('es-AR', {minimumFractionDigits: 2});
         }
 
@@ -1057,10 +964,14 @@
                     window.salesHistory.unshift(saleRecord); renderInventory();
                 }
 
+                // Venta 100% completada, ahora vaciamos el carrito usando el renderCart blindado.
                 showToast("Venta completada con éxito", "success");
-                window.cart = []; renderCart(); switchView('view-balance');
+                window.cart = []; 
+                renderCart(); 
+                switchView('view-balance');
+                
             } catch (error) { 
-                showToast("Error: " + (error.message || error), "error"); 
+                showToast("Error en la venta: " + (error.message || error), "error"); 
             } finally { 
                 btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Confirmar Venta'; btn.disabled = false; 
             }
@@ -1069,40 +980,38 @@
         function updateBalanceCards() {
             let totalVal = 0, potentialProfit = 0, itemCount = 0;
             window.inventory.forEach(prod => {
-                const qty = Number(prod.qty) || 0;
-                const cost = Number(prod.cost) || 0;
-                const price = Number(prod.price) || 0;
-                if (qty > 0) {
-                    totalVal += (cost * qty);
-                    potentialProfit += ((price - cost) * qty);
-                    itemCount += qty;
-                }
+                const qty = Number(prod.qty) || 0; const cost = Number(prod.cost) || 0; const price = Number(prod.price) || 0;
+                if (qty > 0) { totalVal += (cost * qty); potentialProfit += ((price - cost) * qty); itemCount += qty; }
             });
             document.getElementById('total-inventory-value').innerText = '$' + totalVal.toLocaleString('es-AR', {minimumFractionDigits: 2});
             document.getElementById('potential-profit-value').innerText = '$' + potentialProfit.toLocaleString('es-AR', {minimumFractionDigits: 2});
             document.getElementById('total-items-count').innerText = `${itemCount} artículos físicos en stock`;
         }
 
-        function renderSalesHistory() {
-            const tbody = document.getElementById('sales-history-body'); tbody.innerHTML = '';
+        window.renderSalesHistory = function() {
+            const tbody = document.getElementById('sales-history-body'); 
+            
+            // CONSTRUCCION DIRECTA EN STRING (A PRUEBA DE FALLOS PARA EL BALANCE)
             if (window.salesHistory.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-gray-500"><i class="fas fa-receipt text-3xl mb-2 text-gray-300"></i><br>No hay ventas registradas aún.</td></tr>`;
                 return;
             }
+            
+            let html = '';
             window.salesHistory.forEach(sale => {
-                const tr = document.createElement('tr'); tr.className = 'hover:bg-gray-50 border-b border-gray-100';
                 let dateStr = "N/A";
                 if(sale.date) { const d = new Date(sale.date); dateStr = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'}); }
                 let itemsSummary = sale.items.map(i => `${i.qty}x ${i.name || 'Item'}`).join(', ');
                 if(itemsSummary.length > 40) itemsSummary = itemsSummary.substring(0, 37) + '...';
                 
-                tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dateStr}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900 truncate max-w-[150px] md:max-w-[300px]" title="${sale.items.map(i=>(i.name||'Item')).join(', ')}">${itemsSummary}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-green-600">+$${(sale.total||0).toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                `;
-                tbody.appendChild(tr);
+                html += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dateStr}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 truncate max-w-[150px] md:max-w-[300px]" title="${sale.items.map(i=>(i.name||'Item')).join(', ')}">${itemsSummary}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-green-600">+$${(sale.total||0).toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    </tr>`;
             });
+            tbody.innerHTML = html;
         }
     </script>
 </body>
