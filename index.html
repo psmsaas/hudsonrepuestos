@@ -72,13 +72,16 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verificando...';
             
             try {
+                // Espera máximo 3 segundos a que Firebase cargue la configuración global
                 const timeout = new Promise(resolve => setTimeout(() => resolve('timeout'), 3000));
                 const fbResult = await Promise.race([window.firebaseLoadedPromise, timeout]);
                 
                 let isValid = false;
                 if (fbResult !== 'timeout' && typeof window.verifyPasswordWithFirebase === 'function') {
+                    // Validar usando la contraseña de Firebase
                     isValid = await window.verifyPasswordWithFirebase(pass);
                 } else {
+                    // Validar usando almacenamiento local como plan B
                     const validPass = localStorage.getItem('app_password') || 'hrepuestos';
                     isValid = (pass === validPass);
                 }
@@ -228,7 +231,7 @@
                         <span class="text-hudson-blue" id="cart-total">$0.00</span>
                     </div>
                     <button onclick="processSale()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center transition-colors text-lg" id="btn-process-sale" disabled>
-                        <i class="fas fa-check-circle mr-2"></i> Confirmar Venta
+                        <i class="fas fa-check-circle mr-2"></i> Iniciar Venta
                     </button>
                 </div>
             </div>
@@ -274,9 +277,10 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalle</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalle</th>
+                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="sales-history-body" class="bg-white divide-y divide-gray-200">
@@ -431,7 +435,7 @@
                             <div class="flex text-sm text-gray-600 justify-center">
                                 <label for="prod-img-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-hudson-blue hover:text-hudson-light px-2 py-1 shadow-sm border border-gray-200">
                                     <span>Tomar foto o subir</span>
-                                    <input id="prod-img-upload" type="file" accept="image/*" capture="environment" class="sr-only" onchange="handleImageUpload(event)">
+                                    <input id="prod-img-upload" type="file" accept="image/*" capture="environment" class="sr-only" onchange="handleImageUpload(event, 'image-preview', 'image-placeholder-icon', 'prod-img-url', 'upload-status-text', 'image-upload-spinner', 'btn-save-product')">
                                 </label>
                             </div>
                             <p id="upload-status-text" class="text-xs text-gray-400 mt-2">Carga local instantánea</p>
@@ -442,7 +446,7 @@
                 </div>
 
                 <div class="pt-4 flex space-x-2">
-                    <button type="button" id="btn-delete-product" onclick="confirmDeleteProduct()" class="hidden flex-none w-12 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg shadow transition-colors flex items-center justify-center">
+                    <button type="button" id="btn-delete-product" onclick="confirmDeleteProduct()" class="hidden flex-none w-12 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg shadow transition-colors flex items-center justify-center" title="Eliminar Producto">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                     <button type="button" onclick="closeModal('modal-add-product')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg">
@@ -456,7 +460,7 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMAR ELIMINACIÓN -->
+    <!-- MODAL CONFIRMAR ELIMINACIÓN PRODUCTO -->
     <div id="modal-confirm-delete" class="fixed inset-0 z-[60] hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div class="p-6 text-center">
@@ -474,6 +478,99 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMAR VENTA (EFECTIVO/TARJETA) -->
+    <div id="modal-complete-sale" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-800">Confirmar Venta</h3>
+            </div>
+            
+            <form id="form-complete-sale" class="p-6 space-y-4" onsubmit="submitCompleteSale(event)">
+                <input type="hidden" id="complete-sale-id" value="">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Método de Pago *</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="paymentMethod" value="efectivo" class="peer sr-only" required checked>
+                            <div class="rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 transition">
+                                <i class="fas fa-money-bill-wave text-2xl mb-2 text-green-500"></i>
+                                <p class="font-semibold text-gray-700">Efectivo</p>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="paymentMethod" value="tarjeta" class="peer sr-only">
+                            <div class="rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-50 transition">
+                                <i class="fas fa-credit-card text-2xl mb-2 text-blue-500"></i>
+                                <p class="font-semibold text-gray-700">Tarjeta/Transf.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Comprobante de Pago (Opcional)</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 relative overflow-hidden group">
+                        <img id="receipt-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-0 opacity-50 group-hover:opacity-30 transition-opacity" alt="Comprobante">
+                        <div class="space-y-1 text-center relative z-10">
+                            <i id="receipt-placeholder-icon" class="fas fa-receipt text-gray-400 text-3xl mb-2"></i>
+                            <div class="flex text-sm text-gray-600 justify-center">
+                                <label for="receipt-img-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-hudson-blue hover:text-hudson-light px-2 py-1 shadow-sm border border-gray-200">
+                                    <span>Tomar foto o subir</span>
+                                    <input id="receipt-img-upload" type="file" accept="image/*" capture="environment" class="sr-only" onchange="handleImageUpload(event, 'receipt-preview', 'receipt-placeholder-icon', 'receipt-img-url', 'receipt-status-text', 'receipt-spinner', 'btn-submit-sale')">
+                                </label>
+                            </div>
+                            <p id="receipt-status-text" class="text-xs text-gray-400 mt-2">Carga local instantánea</p>
+                            <div id="receipt-spinner" class="hidden mt-2"><i class="fas fa-spinner fa-spin text-hudson-blue text-xl"></i></div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="receipt-img-url" value="">
+                </div>
+
+                <div class="pt-4 flex space-x-3">
+                    <button type="button" onclick="closeModal('modal-complete-sale')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-submit-sale" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors">
+                        Confirmar Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CANCELAR VENTA -->
+    <div id="modal-cancel-sale" class="fixed inset-0 z-[60] hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="p-6 text-center">
+                <input type="hidden" id="cancel-sale-id" value="">
+                <div class="w-16 h-16 rounded-full bg-red-100 mx-auto flex items-center justify-center mb-4">
+                    <i class="fas fa-times-circle text-3xl text-red-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Cancelar Venta</h3>
+                <p class="text-gray-600 text-sm mb-2">¿Estás seguro que deseas eliminar esta venta?</p>
+                <p class="text-green-600 text-xs font-semibold mb-6 bg-green-50 p-2 rounded border border-green-100"><i class="fas fa-undo-alt mr-1"></i> El stock de los productos será devuelto al inventario automáticamente.</p>
+                
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal('modal-cancel-sale')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg">
+                        Volver
+                    </button>
+                    <button type="button" id="btn-confirm-cancel-sale" onclick="executeCancelSale()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow">
+                        Sí, eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VER COMPROBANTE -->
+    <div id="modal-view-receipt" class="fixed inset-0 z-[70] hidden bg-black bg-opacity-90 flex items-center justify-center p-4" onclick="closeModal('modal-view-receipt')">
+        <div class="relative max-w-full max-h-full">
+            <button class="absolute -top-10 right-0 text-white hover:text-gray-300 text-3xl font-bold">&times;</button>
+            <img id="receipt-full-img" src="" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl bg-white" alt="Comprobante">
         </div>
     </div>
 
@@ -628,8 +725,10 @@
             if(btnElement && btnElement.classList.contains('nav-btn-desktop')) { btnElement.classList.add('bg-blue-50', 'text-hudson-blue', 'font-semibold'); btnElement.classList.remove('text-gray-600'); }
         };
 
-        window.openModal = function(modalId, productId = null) {
+        window.openModal = function(modalId, paramId = null) {
             document.getElementById(modalId).classList.remove('hidden');
+            
+            // Modal Producto
             if (modalId === 'modal-add-product') {
                 document.getElementById('form-product').reset();
                 document.getElementById('image-preview').classList.add('hidden');
@@ -639,10 +738,10 @@
                 document.getElementById('upload-status-text').innerText = "Carga local instantánea";
                 document.getElementById('upload-status-text').className = "text-xs text-gray-400 mt-2 text-center";
 
-                if (productId) {
+                if (paramId) {
                     document.getElementById('modal-title').innerText = 'Editar Repuesto';
                     document.getElementById('btn-delete-product').classList.remove('hidden'); 
-                    const prod = window.inventory.find(p => p.id === productId);
+                    const prod = window.inventory.find(p => p.id === paramId);
                     if(prod) {
                         document.getElementById('prod-id').value = prod.id;
                         document.getElementById('prod-code').value = prod.code || '';
@@ -667,7 +766,7 @@
 
         window.closeModal = function(modalId) { document.getElementById(modalId).classList.add('hidden'); };
 
-        // PRODUCTOS: FOTO, GUARDAR Y ELIMINAR
+        // SISTEMA DE IMÁGENES GENÉRICO (Sirve para productos y comprobantes)
         async function compressToBase64(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -689,25 +788,33 @@
             });
         }
 
-        window.handleImageUpload = async function(event) {
+        window.handleImageUpload = async function(event, previewId, iconId, inputId, textId, spinnerId, btnId) {
             const file = event.target.files[0]; if (!file) return;
-            const spinner = document.getElementById('image-upload-spinner');
-            const statusText = document.getElementById('upload-status-text');
-            const btnGuardar = document.getElementById('btn-save-product');
+            const spinner = document.getElementById(spinnerId);
+            const statusText = document.getElementById(textId);
+            const btnGuardar = document.getElementById(btnId);
+            
             spinner.classList.remove('hidden'); btnGuardar.disabled = true; btnGuardar.classList.add('opacity-50');
             statusText.innerText = "Optimizando foto..."; statusText.className = "text-xs text-hudson-blue mt-2 text-center font-semibold";
 
             try {
-                const base64String = await compressToBase64(file, 250, 250, 0.4);
-                document.getElementById('image-preview').src = base64String;
-                document.getElementById('image-preview').classList.remove('hidden');
-                document.getElementById('image-placeholder-icon').classList.add('hidden');
-                document.getElementById('prod-img-url').value = base64String;
+                // Comprobantes pueden tener más resolución (800x800) vs productos (250x250)
+                const isReceipt = inputId.includes('receipt');
+                const base64String = await compressToBase64(file, isReceipt ? 800 : 250, isReceipt ? 800 : 250, 0.4);
+                
+                document.getElementById(previewId).src = base64String;
+                document.getElementById(previewId).classList.remove('hidden');
+                document.getElementById(iconId).classList.add('hidden');
+                document.getElementById(inputId).value = base64String;
                 statusText.innerText = "¡Foto lista!"; statusText.className = "text-xs text-green-500 mt-2 text-center font-bold";
-            } catch (error) { statusText.innerText = "Error procesando foto"; statusText.className = "text-xs text-red-500 mt-2 text-center"; } 
-            finally { spinner.classList.add('hidden'); btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50'); }
+            } catch (error) { 
+                statusText.innerText = "Error procesando foto"; statusText.className = "text-xs text-red-500 mt-2 text-center"; 
+            } finally { 
+                spinner.classList.add('hidden'); btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50'); 
+            }
         };
 
+        // PRODUCTOS: GUARDAR Y ELIMINAR
         window.saveProduct = async function(e) {
             e.preventDefault();
             const id = document.getElementById('prod-id').value;
@@ -738,7 +845,7 @@
                     renderInventory(); updateBalanceCards(); showToast("Guardado localmente");
                 }
                 closeModal('modal-add-product');
-            } catch (error) { showToast("Error al guardar: Permisos insuficientes", "error"); }
+            } catch (error) { showToast(`Error al guardar: ${error.message}`, "error"); }
         };
 
         window.confirmDeleteProduct = function() {
@@ -761,11 +868,11 @@
                 else { window.inventory = window.inventory.filter(p => p.id !== id); renderInventory(); updateBalanceCards(); }
                 showToast("Producto eliminado", "success");
                 closeModal('modal-confirm-delete'); closeModal('modal-add-product');
-            } catch(e) { showToast("Error al eliminar", "error"); } 
+            } catch(e) { showToast(`Error al eliminar: ${e.message}`, "error"); } 
             finally { btn.innerHTML = 'Sí, eliminar'; btn.disabled = false; }
         };
 
-        // RENDER DE VISTAS 
+        // RENDER DE INVENTARIO
         window.renderInventory = function(filterText = '') {
             const list = document.getElementById('inventory-list');
             const alertBanner = document.getElementById('stock-alert-banner');
@@ -781,45 +888,43 @@
 
             const filtered = window.inventory.filter(p => (p.name || '').toLowerCase().includes(filterText.toLowerCase()) || (p.code || '').toLowerCase().includes(filterText.toLowerCase()));
             
-            // CONSTRUCCION DIRECTA EN STRING (A PRUEBA DE FALLOS)
-            if (filtered.length === 0) { 
-                list.innerHTML = `<li class="p-6 text-center text-gray-500 py-10"><i class="fas fa-box-open text-4xl mb-3 text-gray-300"></i><p>No hay productos en el inventario.</p><p class="text-sm">Agrega uno nuevo para comenzar.</p></li>`;
-                return; 
-            }
-
             let html = '';
-            filtered.forEach(prod => {
-                const imgSrc = prod.img ? prod.img : 'https://placehold.co/100x100/e2e8f0/475569?text=Repuesto';
-                const qty = Number(prod.qty) || 0; const cost = Number(prod.cost) || 0; const price = Number(prod.price) || 0;
-                const name = prod.name || 'Sin nombre'; const code = prod.code || 'S/C';
-                const stockClass = qty <= 0 ? 'bg-red-100 text-red-800' : (qty <= 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
-                
-                html += `
-                    <li class="p-4 hover:bg-gray-50 flex flex-col sm:flex-row items-center sm:items-start transition duration-150 border-b border-gray-100">
-                        <div class="flex-shrink-0 mb-3 sm:mb-0 sm:mr-4 relative">
-                            <img class="h-20 w-20 rounded-lg object-cover border border-gray-200" src="${imgSrc}" onerror="this.src='https://placehold.co/100x100/e2e8f0/475569?text=Foto'">
-                            <span class="absolute -top-2 -right-2 ${stockClass} text-xs font-bold px-2 py-1 rounded-full shadow-sm">Stock: ${qty}</span>
-                        </div>
-                        <div class="flex-1 text-center sm:text-left min-w-0 w-full">
-                            <div class="flex flex-col sm:flex-row sm:justify-between items-center sm:items-start mb-1">
-                                <h3 class="text-lg font-bold text-gray-900 truncate" title="${name}">${name}</h3>
-                                <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded mt-1 sm:mt-0">${code}</span>
+            if (filtered.length === 0) { 
+                html = `<li class="p-6 text-center text-gray-500 py-10"><i class="fas fa-box-open text-4xl mb-3 text-gray-300"></i><p>No hay productos en el inventario.</p><p class="text-sm">Agrega uno nuevo para comenzar.</p></li>`;
+            } else {
+                filtered.forEach(prod => {
+                    const imgSrc = prod.img ? prod.img : 'https://placehold.co/100x100/e2e8f0/475569?text=Repuesto';
+                    const qty = Number(prod.qty) || 0; const cost = Number(prod.cost) || 0; const price = Number(prod.price) || 0;
+                    const name = prod.name || 'Sin nombre'; const code = prod.code || 'S/C';
+                    const stockClass = qty <= 0 ? 'bg-red-100 text-red-800' : (qty <= 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
+                    
+                    html += `
+                        <li class="p-4 hover:bg-gray-50 flex flex-col sm:flex-row items-center sm:items-start transition duration-150 border-b border-gray-100">
+                            <div class="flex-shrink-0 mb-3 sm:mb-0 sm:mr-4 relative">
+                                <img class="h-20 w-20 rounded-lg object-cover border border-gray-200" src="${imgSrc}" onerror="this.src='https://placehold.co/100x100/e2e8f0/475569?text=Foto'">
+                                <span class="absolute -top-2 -right-2 ${stockClass} text-xs font-bold px-2 py-1 rounded-full shadow-sm">Stock: ${qty}</span>
                             </div>
-                            <div class="mt-2 flex flex-col sm:flex-row justify-between text-sm w-full">
-                                <div class="text-gray-500 space-y-1">
-                                    <p>Costo: $${cost.toLocaleString('es-AR')}</p>
-                                    <p class="font-semibold text-gray-800">Precio Venta: <span class="text-hudson-blue text-lg">$${price.toLocaleString('es-AR')}</span></p>
+                            <div class="flex-1 text-center sm:text-left min-w-0 w-full">
+                                <div class="flex flex-col sm:flex-row sm:justify-between items-center sm:items-start mb-1">
+                                    <h3 class="text-lg font-bold text-gray-900 truncate" title="${name}">${name}</h3>
+                                    <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded mt-1 sm:mt-0">${code}</span>
                                 </div>
-                                <div class="mt-3 sm:mt-0 flex gap-2 justify-center sm:justify-end">
-                                    <button onclick="openModal('modal-add-product', '${prod.id}')" class="text-gray-500 hover:text-hudson-blue p-2 rounded-full hover:bg-blue-50 transition"><i class="fas fa-edit"></i></button>
-                                    <button onclick="addFromInventoryToCart('${prod.id}')" class="bg-hudson-blue text-white px-3 py-1 rounded-md hover:bg-hudson-light shadow-sm transition flex items-center text-xs font-bold" ${qty <= 0 ? 'disabled class="opacity-50 cursor-not-allowed"' : ''}>
-                                        <i class="fas fa-cart-plus mr-1"></i> Vender
-                                    </button>
+                                <div class="mt-2 flex flex-col sm:flex-row justify-between text-sm w-full">
+                                    <div class="text-gray-500 space-y-1">
+                                        <p>Costo: $${cost.toLocaleString('es-AR')}</p>
+                                        <p class="font-semibold text-gray-800">Precio Venta: <span class="text-hudson-blue text-lg">$${price.toLocaleString('es-AR')}</span></p>
+                                    </div>
+                                    <div class="mt-3 sm:mt-0 flex gap-2 justify-center sm:justify-end">
+                                        <button onclick="openModal('modal-add-product', '${prod.id}')" class="text-gray-500 hover:text-hudson-blue p-2 rounded-full hover:bg-blue-50 transition"><i class="fas fa-edit"></i></button>
+                                        <button onclick="addFromInventoryToCart('${prod.id}')" class="bg-hudson-blue text-white px-3 py-1 rounded-md hover:bg-hudson-light shadow-sm transition flex items-center text-xs font-bold" ${qty <= 0 ? 'disabled class="opacity-50 cursor-not-allowed"' : ''}>
+                                            <i class="fas fa-cart-plus mr-1"></i> Vender
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </li>`;
-            });
+                        </li>`;
+                });
+            }
             list.innerHTML = html;
         };
 
@@ -897,41 +1002,39 @@
             const btnProcess = document.getElementById('btn-process-sale');
             let total = 0; 
             
-            // CONSTRUCCION DIRECTA EN STRING (A PRUEBA DE FALLOS PARA EL CARRITO)
+            let html = '';
             if (window.cart.length === 0) {
-                list.innerHTML = `<li class="p-4 text-center text-gray-400 italic">El carrito está vacío</li>`;
+                html = `<li class="p-4 text-center text-gray-400 italic">El carrito está vacío</li>`;
                 document.getElementById('cart-total').innerText = '$0.00';
                 btnProcess.disabled = true; btnProcess.classList.add('opacity-50', 'cursor-not-allowed');
-                return;
-            }
-
-            btnProcess.disabled = false; btnProcess.classList.remove('opacity-50', 'cursor-not-allowed');
-
-            let html = '';
-            window.cart.forEach((item, index) => {
-                const itemTotal = item.price * item.qty; total += itemTotal;
-                let typeBadge = item.isService ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold uppercase ml-2">Servicio</span>' : '';
-                html += `
-                    <li class="p-3 flex justify-between items-center bg-white border-b border-gray-100">
-                        <div class="flex-1 pr-2">
-                            <p class="text-sm font-semibold text-gray-800 break-words">${item.name} ${typeBadge}</p>
-                            <p class="text-xs text-gray-500">$${item.price.toLocaleString('es-AR')} c/u</p>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="flex items-center border border-gray-300 rounded-md bg-white">
-                                <button onclick="updateCartItemQty(${index}, -1)" class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-l-md"><i class="fas fa-minus text-xs"></i></button>
-                                <span class="px-2 py-1 text-sm font-semibold min-w-[24px] text-center">${item.qty}</span>
-                                <button onclick="updateCartItemQty(${index}, 1)" class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-r-md"><i class="fas fa-plus text-xs"></i></button>
+            } else {
+                btnProcess.disabled = false; btnProcess.classList.remove('opacity-50', 'cursor-not-allowed');
+                window.cart.forEach((item, index) => {
+                    const itemTotal = item.price * item.qty; total += itemTotal;
+                    let typeBadge = item.isService ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold uppercase ml-2">Servicio</span>' : '';
+                    html += `
+                        <li class="p-3 flex justify-between items-center bg-white border-b border-gray-100">
+                            <div class="flex-1 pr-2">
+                                <p class="text-sm font-semibold text-gray-800 break-words">${item.name} ${typeBadge}</p>
+                                <p class="text-xs text-gray-500">$${item.price.toLocaleString('es-AR')} c/u</p>
                             </div>
-                            <div class="text-right min-w-[70px]"><p class="font-bold text-hudson-blue">$${itemTotal.toLocaleString('es-AR')}</p></div>
-                            <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </li>`;
-            });
+                            <div class="flex items-center space-x-3">
+                                <div class="flex items-center border border-gray-300 rounded-md bg-white">
+                                    <button onclick="updateCartItemQty(${index}, -1)" class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-l-md"><i class="fas fa-minus text-xs"></i></button>
+                                    <span class="px-2 py-1 text-sm font-semibold min-w-[24px] text-center">${item.qty}</span>
+                                    <button onclick="updateCartItemQty(${index}, 1)" class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-r-md"><i class="fas fa-plus text-xs"></i></button>
+                                </div>
+                                <div class="text-right min-w-[70px]"><p class="font-bold text-hudson-blue">$${itemTotal.toLocaleString('es-AR')}</p></div>
+                                <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </li>`;
+                });
+            }
             list.innerHTML = html;
             document.getElementById('cart-total').innerText = '$' + total.toLocaleString('es-AR', {minimumFractionDigits: 2});
         }
 
+        // PROCESAR NUEVA VENTA (QUEDA COMO PENDIENTE INICIALMENTE)
         window.processSale = async function() {
             if (window.cart.length === 0) return;
             const btn = document.getElementById('btn-process-sale');
@@ -939,7 +1042,13 @@
 
             const totalSale = window.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             const totalCost = window.cart.reduce((sum, item) => sum + ((item.cost || 0) * item.qty), 0);
-            const saleRecord = { date: db ? serverTimestamp() : new Date().getTime(), items: window.cart, total: totalSale, profit: totalSale - totalCost };
+            const saleRecord = { 
+                date: db ? serverTimestamp() : new Date().getTime(), 
+                items: window.cart, 
+                total: totalSale, 
+                profit: totalSale - totalCost,
+                status: 'pending' // Estado por defecto
+            };
 
             try {
                 if (db && auth.currentUser) {
@@ -949,9 +1058,9 @@
                             if (!item.isService) {
                                 const prodRef = getDocRef('inventory', item.id);
                                 const prodSnap = await transaction.get(prodRef);
-                                if (!prodSnap.exists()) throw "Producto inexistente en DB";
+                                if (!prodSnap.exists()) throw new Error("Producto inexistente en DB");
                                 const currentStock = Number(prodSnap.data().qty) || 0;
-                                if (currentStock < item.qty) throw "Stock insuficiente para " + item.name;
+                                if (currentStock < item.qty) throw new Error("Stock insuficiente para " + item.name);
                                 stockUpdates.push({ ref: prodRef, newQty: currentStock - item.qty });
                             }
                         }
@@ -964,8 +1073,7 @@
                     window.salesHistory.unshift(saleRecord); renderInventory();
                 }
 
-                // Venta 100% completada, ahora vaciamos el carrito usando el renderCart blindado.
-                showToast("Venta completada con éxito", "success");
+                showToast("Venta iniciada. Por favor confírmala en Balance.", "success");
                 window.cart = []; 
                 renderCart(); 
                 switchView('view-balance');
@@ -973,7 +1081,7 @@
             } catch (error) { 
                 showToast("Error en la venta: " + (error.message || error), "error"); 
             } finally { 
-                btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Confirmar Venta'; btn.disabled = false; 
+                btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Iniciar Venta'; btn.disabled = false; 
             }
         };
 
@@ -988,29 +1096,158 @@
             document.getElementById('total-items-count').innerText = `${itemCount} artículos físicos en stock`;
         }
 
+        // CONFIRMAR VENTA
+        window.openConfirmSale = function(saleId) {
+            document.getElementById('form-complete-sale').reset();
+            document.getElementById('complete-sale-id').value = saleId;
+            document.getElementById('receipt-preview').classList.add('hidden');
+            document.getElementById('receipt-placeholder-icon').classList.remove('hidden');
+            document.getElementById('receipt-img-url').value = "";
+            document.getElementById('receipt-status-text').innerText = "Carga local instantánea";
+            document.getElementById('receipt-status-text').className = "text-xs text-gray-400 mt-2 text-center";
+            document.getElementById('modal-complete-sale').classList.remove('hidden');
+        };
+
+        window.submitCompleteSale = async function(e) {
+            e.preventDefault();
+            const saleId = document.getElementById('complete-sale-id').value;
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const receiptImg = document.getElementById('receipt-img-url').value;
+            
+            const btn = document.getElementById('btn-submit-sale');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Confirmando...'; btn.disabled = true;
+
+            try {
+                if (db && auth.currentUser) {
+                    await updateDoc(getDocRef('sales', saleId), {
+                        status: 'completed',
+                        paymentMethod: paymentMethod,
+                        receiptImg: receiptImg || null
+                    });
+                } else {
+                    const idx = window.salesHistory.findIndex(s => s.id === saleId);
+                    if(idx > -1) {
+                        window.salesHistory[idx].status = 'completed';
+                        window.salesHistory[idx].paymentMethod = paymentMethod;
+                        window.salesHistory[idx].receiptImg = receiptImg;
+                    }
+                    renderSalesHistory();
+                }
+                showToast("Pago confirmado y guardado", "success");
+                closeModal('modal-complete-sale');
+            } catch(error) {
+                showToast(`Error al confirmar: ${error.message}`, "error");
+            } finally {
+                btn.innerHTML = 'Confirmar Pago'; btn.disabled = false;
+            }
+        };
+
+        // CANCELAR Y DEVOLVER STOCK
+        window.openCancelSale = function(saleId) {
+            document.getElementById('cancel-sale-id').value = saleId;
+            document.getElementById('modal-cancel-sale').classList.remove('hidden');
+        };
+
+        window.executeCancelSale = async function() {
+            const saleId = document.getElementById('cancel-sale-id').value;
+            const btn = document.getElementById('btn-confirm-cancel-sale');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Cancelando...'; btn.disabled = true;
+
+            try {
+                if (db && auth.currentUser) {
+                    await runTransaction(db, async (transaction) => {
+                        const saleRef = getDocRef('sales', saleId);
+                        const saleSnap = await transaction.get(saleRef);
+                        if (!saleSnap.exists()) throw new Error("Venta no encontrada");
+                        
+                        const saleData = saleSnap.data();
+                        
+                        // Devolver stock
+                        for(let item of (saleData.items || [])) {
+                            if(!item.isService) {
+                                const prodRef = getDocRef('inventory', item.id);
+                                const prodSnap = await transaction.get(prodRef);
+                                if(prodSnap.exists()) {
+                                    const currentQty = Number(prodSnap.data().qty) || 0;
+                                    transaction.update(prodRef, { qty: currentQty + Number(item.qty) });
+                                }
+                            }
+                        }
+                        
+                        // Eliminar registro
+                        transaction.delete(saleRef);
+                    });
+                } else {
+                    // MODO LOCAL
+                    const sale = window.salesHistory.find(s => s.id === saleId);
+                    if(sale) {
+                        sale.items.forEach(item => {
+                            if(!item.isService) {
+                                const prod = window.inventory.find(p => p.id === item.id);
+                                if(prod) prod.qty += item.qty;
+                            }
+                        });
+                    }
+                    window.salesHistory = window.salesHistory.filter(s => s.id !== saleId);
+                    renderInventory(); updateBalanceCards(); renderSalesHistory();
+                }
+                
+                showToast("Venta eliminada y stock restaurado", "info");
+                closeModal('modal-cancel-sale');
+            } catch(error) {
+                showToast(`Error al cancelar: ${error.message}`, "error");
+            } finally {
+                btn.innerHTML = 'Sí, eliminar'; btn.disabled = false;
+            }
+        };
+
+        window.viewReceipt = function(imgUrl) {
+            document.getElementById('receipt-full-img').src = imgUrl;
+            document.getElementById('modal-view-receipt').classList.remove('hidden');
+        };
+
+        // HISTORIAL DE VENTAS
         window.renderSalesHistory = function() {
             const tbody = document.getElementById('sales-history-body'); 
             
-            // CONSTRUCCION DIRECTA EN STRING (A PRUEBA DE FALLOS PARA EL BALANCE)
-            if (window.salesHistory.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-gray-500"><i class="fas fa-receipt text-3xl mb-2 text-gray-300"></i><br>No hay ventas registradas aún.</td></tr>`;
-                return;
-            }
-            
             let html = '';
-            window.salesHistory.forEach(sale => {
-                let dateStr = "N/A";
-                if(sale.date) { const d = new Date(sale.date); dateStr = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'}); }
-                let itemsSummary = sale.items.map(i => `${i.qty}x ${i.name || 'Item'}`).join(', ');
-                if(itemsSummary.length > 40) itemsSummary = itemsSummary.substring(0, 37) + '...';
-                
-                html += `
-                    <tr class="hover:bg-gray-50 border-b border-gray-100">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dateStr}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900 truncate max-w-[150px] md:max-w-[300px]" title="${sale.items.map(i=>(i.name||'Item')).join(', ')}">${itemsSummary}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-green-600">+$${(sale.total||0).toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                    </tr>`;
-            });
+            if (window.salesHistory.length === 0) {
+                html = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500"><i class="fas fa-receipt text-3xl mb-2 text-gray-300"></i><br>No hay ventas registradas aún.</td></tr>`;
+            } else {
+                window.salesHistory.forEach(sale => {
+                    let dateStr = "N/A";
+                    if(sale.date) { const d = new Date(sale.date); dateStr = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'}); }
+                    
+                    let itemsSummary = sale.items.map(i => `${i.qty}x ${i.name || 'Item'}`).join(', ');
+                    if(itemsSummary.length > 30) itemsSummary = itemsSummary.substring(0, 27) + '...';
+                    
+                    let rowClass = sale.status === 'completed' ? 'hover:bg-gray-50 bg-white' : 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-yellow-400';
+                    let totalClass = sale.status === 'completed' ? 'text-green-600' : 'text-gray-500';
+                    
+                    let actionsHtml = '';
+                    if (sale.status === 'completed') {
+                        const payIcon = sale.paymentMethod === 'tarjeta' ? 'fa-credit-card text-blue-500' : 'fa-money-bill-wave text-green-500';
+                        const payText = sale.paymentMethod === 'tarjeta' ? 'Tarjeta' : 'Efectivo';
+                        const receiptBtn = sale.receiptImg ? `<button onclick="window.viewReceipt('${sale.receiptImg}')" class="text-gray-500 hover:text-hudson-blue ml-2 p-1" title="Ver comprobante"><i class="fas fa-image text-lg"></i></button>` : '';
+                        actionsHtml = `<div class="flex items-center justify-center"><span class="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded shadow-inner uppercase whitespace-nowrap"><i class="fas ${payIcon} mr-1"></i>${payText}</span> ${receiptBtn}</div>`;
+                    } else {
+                        actionsHtml = `
+                            <div class="flex justify-center gap-2">
+                                <button onclick="openConfirmSale('${sale.id}')" class="bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full shadow-sm transition flex items-center justify-center" title="Confirmar Venta"><i class="fas fa-check"></i></button>
+                                <button onclick="openCancelSale('${sale.id}')" class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full shadow-sm transition flex items-center justify-center" title="Cancelar y devolver stock"><i class="fas fa-times"></i></button>
+                            </div>
+                        `;
+                    }
+                    
+                    html += `
+                        <tr class="${rowClass} border-b border-gray-100 transition-colors">
+                            <td class="px-4 py-4 whitespace-nowrap text-xs text-gray-500">${dateStr}</td>
+                            <td class="px-4 py-4 text-xs text-gray-900 truncate max-w-[120px] md:max-w-[300px]" title="${sale.items.map(i=>(i.name||'Item')).join(', ')}">${itemsSummary}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-right text-xs font-bold ${totalClass}">$${(sale.total||0).toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-center">${actionsHtml}</td>
+                        </tr>`;
+                });
+            }
             tbody.innerHTML = html;
         }
     </script>
