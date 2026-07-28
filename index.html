@@ -77,6 +77,23 @@
         </div>
     </div>
 
+    <!-- Script de Login Aislado para evitar recargas -->
+    <script>
+        function handleLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('login-password').value;
+            if (pass === 'hrepuestos') {
+                const loginScreen = document.getElementById('login-screen');
+                loginScreen.style.opacity = '0';
+                setTimeout(() => loginScreen.classList.add('hidden'), 300);
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+                document.getElementById('login-password').value = '';
+                document.getElementById('login-password').focus();
+            }
+        }
+    </script>
+
     <!-- Cabecera Superior (Header) -->
     <header class="bg-hudson-blue text-white shadow-md fixed top-0 w-full z-10">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -280,9 +297,7 @@
         
         <!-- Marca de agua / Desarrollador -->
         <div class="p-4 flex justify-center items-center pb-8 border-t border-gray-100">
-            <!-- REEMPLAZA EL HREF CON LA URL DE TU PORTAFOLIO -->
             <a href="https://psmsaas.github.io/psm/" target="_blank" rel="noopener noreferrer" class="opacity-60 hover:opacity-100 transition-all duration-300 hover:scale-105" title="Desarrollado por vos">
-                <!-- REEMPLAZA EL SRC CON LA URL DE TU LOGO -->
                 <img src="psm.png" alt="psmsaas" onerror="this.src='https://placehold.co/100x100/f3f4f6/a1a1aa?text=Dev'" class="w-12 h-12 object-contain filter grayscale hover:grayscale-0">
             </a>
         </div>
@@ -293,7 +308,7 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-full overflow-y-auto">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
                 <h3 class="text-xl font-bold text-gray-800" id="modal-title">Nuevo Repuesto</h3>
-                <button onclick="closeModal('modal-add-product')" class="text-gray-400 hover:text-gray-700">
+                <button type="button" onclick="closeModal('modal-add-product')" class="text-gray-400 hover:text-gray-700">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -348,16 +363,38 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">URL de Imagen (Opcional)</label>
-                    <input type="url" id="prod-img" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-hudson-blue focus:border-hudson-blue sm:text-sm text-gray-500" placeholder="https://ejemplo.com/imagen.jpg">
-                    <p class="text-xs text-gray-400 mt-1">Deja vacío para usar imagen por defecto.</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Imagen del Repuesto (Opcional)</label>
+                    
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 relative overflow-hidden group">
+                        
+                        <!-- Contenedor para mostrar la imagen seleccionada -->
+                        <img id="image-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-0 opacity-50 group-hover:opacity-30 transition-opacity" alt="Preview">
+                        
+                        <div class="space-y-1 text-center relative z-10">
+                            <i id="image-placeholder-icon" class="fas fa-camera text-gray-400 text-3xl mb-2"></i>
+                            <div class="flex text-sm text-gray-600 justify-center">
+                                <label for="prod-img-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-hudson-blue hover:text-hudson-light focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-hudson-blue px-2 py-1 shadow-sm border border-gray-200">
+                                    <span>Tomar foto o subir</span>
+                                    <input id="prod-img-upload" type="file" accept="image/*" capture="environment" class="sr-only" onchange="handleImageUpload(event)">
+                                </label>
+                            </div>
+                            <p id="upload-status-text" class="text-xs text-gray-400 mt-2">Tamaño máximo recomendado: 2MB</p>
+                            
+                            <!-- Spinner de carga oculto por defecto -->
+                            <div id="image-upload-spinner" class="hidden mt-2">
+                                <i class="fas fa-spinner fa-spin text-hudson-blue text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Campo oculto para guardar la URL final generada por Firebase -->
+                    <input type="hidden" id="prod-img-url" value="">
                 </div>
 
                 <div class="pt-4 flex space-x-3">
                     <button type="button" onclick="closeModal('modal-add-product')" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg">
                         Cancelar
                     </button>
-                    <button type="submit" class="flex-1 bg-hudson-blue hover:bg-hudson-light text-white font-semibold py-2 px-4 rounded-lg shadow">
+                    <button type="submit" id="btn-save-product" class="flex-1 bg-hudson-blue hover:bg-hudson-light text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors">
                         Guardar
                     </button>
                 </div>
@@ -368,39 +405,26 @@
     <!-- Contenedor de Notificaciones (Toasts) -->
     <div id="toast-container" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 md:bottom-10 md:left-auto md:right-10 md:transform-none z-50 flex flex-col gap-2"></div>
 
-    <script>
-        // Función de acceso aislada para que funcione instantáneamente
-        // sin depender de si Firebase tardó en cargar
-        function handleLogin(e) {
-            e.preventDefault();
-            const pass = document.getElementById('login-password').value;
-            if (pass === 'hrepuestos') {
-                const loginScreen = document.getElementById('login-screen');
-                loginScreen.style.opacity = '0';
-                setTimeout(() => loginScreen.classList.add('hidden'), 300);
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-                document.getElementById('login-password').value = '';
-                document.getElementById('login-password').focus();
-            }
-        }
-    </script>
-
     <script type="module">
-        // Importaciones de Firebase SDK (Versión 11.6.1)
+        // Importaciones de Firebase SDK (Versión 11.6.1) - INCLUIDO STORAGE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, collection, doc, setDoc, updateDoc, 
             onSnapshot, runTransaction, serverTimestamp
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { 
+            getStorage, ref, uploadBytesResumable, getDownloadURL 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // Variables de Estado Globales
         window.inventory = [];
         window.salesHistory = [];
         window.cart = [];
 
-        // CONFIGURACIÓN DE FIREBASE
+        // =========================================================================
+        // 👇👇👇 CONFIGURACIÓN DE FIREBASE 👇👇👇
+        // =========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyDnuQW4nK09wlfA2M2frDLQDC7IWfBjBxE",
             authDomain: "sistema-hr-f8935.firebaseapp.com",
@@ -409,17 +433,20 @@
             messagingSenderId: "1069269889005",
             appId: "1:1069269889005:web:532af64187019375c681e4"
         };
+        // =========================================================================
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'hudson-repuestos-v1';
         
-        let firebaseConfigToUse = firebaseConfig;
+        let firebaseConfigToUse;
         if (typeof __firebase_config !== 'undefined') {
-            try { firebaseConfigToUse = JSON.parse(__firebase_config); } catch(e) {}
+            firebaseConfigToUse = JSON.parse(__firebase_config);
+        } else {
+            firebaseConfigToUse = firebaseConfig;
         }
 
-        let auth, db, userId;
+        let auth, db, storage, userId;
 
-        // Rutas compartidas para que todos los empleados de la tienda vean lo mismo
+        // Rutas compartidas
         function getCollectionRef(colName) { 
             return collection(db, 'artifacts', appId, 'public', 'data', colName); 
         }
@@ -429,30 +456,29 @@
 
         async function initFirebase() {
             try {
-                if (firebaseConfigToUse.apiKey === "TU_API_KEY") {
+                if (firebaseConfigToUse.apiKey === "TU_API_KEY" && typeof __firebase_config === 'undefined') {
                     throw new Error("Falta configurar Firebase. Se usará el modo local de prueba.");
                 }
 
                 const app = initializeApp(firebaseConfigToUse);
                 auth = getAuth(app);
                 db = getFirestore(app);
+                storage = getStorage(app); // Inicializamos Storage
 
                 if (typeof __initial_auth_token !== 'undefined') {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    await signInAnonymously(auth);
+                    await signInAnonymously(auth); 
                 }
                 
                 userId = auth.currentUser.uid;
                 
-                // Icono Nube Verde = Conectado
                 document.getElementById('connection-status').innerHTML = `
                     <i class="fas fa-cloud text-green-400 text-xl" title="Sincronizado en la nube"></i>
                 `;
                 return true;
             } catch (error) {
                 console.warn(error.message);
-                // Icono Nube Roja = Modo Local
                 document.getElementById('connection-status').innerHTML = `
                     <i class="fas fa-cloud text-red-500 text-xl" title="Sin conexión (Modo Local)"></i>
                 `;
@@ -513,6 +539,15 @@
             modal.classList.remove('hidden');
             if (modalId === 'modal-add-product') {
                 document.getElementById('form-product').reset();
+                
+                // Reiniciar campos visuales de imagen al abrir
+                document.getElementById('image-preview').classList.add('hidden');
+                document.getElementById('image-placeholder-icon').classList.remove('hidden');
+                document.getElementById('image-preview').src = "";
+                document.getElementById('prod-img-url').value = "";
+                document.getElementById('upload-status-text').innerText = "Tamaño máximo recomendado: 2MB";
+                document.getElementById('upload-status-text').className = "text-xs text-gray-400 mt-2 text-center";
+
                 if (productId) {
                     document.getElementById('modal-title').innerText = 'Editar Repuesto';
                     const prod = window.inventory.find(p => p.id === productId);
@@ -523,7 +558,14 @@
                         document.getElementById('prod-cost').value = prod.cost;
                         document.getElementById('prod-price').value = prod.price;
                         document.getElementById('prod-qty').value = prod.qty;
-                        document.getElementById('prod-img').value = prod.img || "";
+                        
+                        // Si el producto ya tiene imagen, mostrarla
+                        if (prod.img) {
+                            document.getElementById('prod-img-url').value = prod.img;
+                            document.getElementById('image-preview').src = prod.img;
+                            document.getElementById('image-preview').classList.remove('hidden');
+                            document.getElementById('image-placeholder-icon').classList.add('hidden');
+                        }
                     }
                 } else {
                     document.getElementById('modal-title').innerText = 'Nuevo Repuesto';
@@ -549,6 +591,75 @@
             }, 3000);
         };
 
+        window.handleImageUpload = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Mostrar vista previa local rápido
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('image-preview').src = e.target.result;
+                document.getElementById('image-preview').classList.remove('hidden');
+                document.getElementById('image-placeholder-icon').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+
+            if (!storage) {
+                showToast("Modo local: La imagen no se guardará en la nube", "error");
+                return;
+            }
+
+            const spinner = document.getElementById('image-upload-spinner');
+            const statusText = document.getElementById('upload-status-text');
+            const btnGuardar = document.getElementById('btn-save-product');
+            
+            spinner.classList.remove('hidden');
+            btnGuardar.disabled = true; // Bloquea guardar mientras sube
+            btnGuardar.classList.add('opacity-50', 'cursor-wait');
+            statusText.innerText = "Subiendo foto a la nube... espera.";
+            statusText.className = "text-xs text-hudson-blue mt-2 text-center font-semibold";
+
+            try {
+                // Crear nombre único para la imagen
+                const fileExt = file.name.split('.').pop();
+                const fileName = `repuestos/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const storageRef = ref(storage, fileName);
+
+                const uploadTask = uploadBytesResumable(storageRef, file);
+
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        statusText.innerText = `Subiendo... ${Math.round(progress)}%`;
+                    }, 
+                    (error) => {
+                        console.error("Error subiendo imagen:", error);
+                        statusText.innerText = "Error al subir foto.";
+                        statusText.className = "text-xs text-red-500 mt-2 text-center";
+                        spinner.classList.add('hidden');
+                        btnGuardar.disabled = false;
+                        btnGuardar.classList.remove('opacity-50', 'cursor-wait');
+                    }, 
+                    async () => {
+                        // Terminó exitosamente, obtenemos URL
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        document.getElementById('prod-img-url').value = downloadURL;
+                        
+                        statusText.innerText = "¡Foto guardada y lista!";
+                        statusText.className = "text-xs text-green-500 mt-2 text-center font-bold";
+                        spinner.classList.add('hidden');
+                        btnGuardar.disabled = false;
+                        btnGuardar.classList.remove('opacity-50', 'cursor-wait');
+                    }
+                );
+            } catch (error) {
+                console.error("Fallo general subida:", error);
+                spinner.classList.add('hidden');
+                btnGuardar.disabled = false;
+                btnGuardar.classList.remove('opacity-50', 'cursor-wait');
+            }
+        };
+
         window.saveProduct = async function(e) {
             e.preventDefault();
             const id = document.getElementById('prod-id').value;
@@ -558,7 +669,7 @@
                 cost: parseFloat(document.getElementById('prod-cost').value),
                 price: parseFloat(document.getElementById('prod-price').value),
                 qty: parseInt(document.getElementById('prod-qty').value),
-                img: document.getElementById('prod-img').value || "",
+                img: document.getElementById('prod-img-url').value || "", // Usa el campo oculto
                 updatedAt: db ? serverTimestamp() : new Date().getTime()
             };
 
@@ -573,7 +684,6 @@
                         showToast("Producto agregado a la nube");
                     }
                 } else {
-                    // MODO LOCAL (Fallback)
                     if (id) {
                         const idx = window.inventory.findIndex(p => p.id === id);
                         window.inventory[idx] = { ...window.inventory[idx], ...productData };
@@ -761,7 +871,6 @@
                         transaction.set(doc(getCollectionRef('sales')), saleRecord);
                     });
                 } else {
-                    // MODO LOCAL (Fallback)
                     window.cart.forEach(item => { if(!item.isService) { const p = window.inventory.find(i => i.id === item.id); if(p) p.qty -= item.qty; } });
                     saleRecord.id = "local_sale_" + Date.now(); saleRecord.date = new Date();
                     window.salesHistory.unshift(saleRecord); renderInventory();
